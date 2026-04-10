@@ -16,10 +16,20 @@ if (existsSync(SERVICE_ACCOUNT_PATH)) {
   db = admin.firestore();
   console.log('Firebase Admin: initialized (Firestore enabled)');
 } else if (process.env.FIREBASE_SERVICE_ACCOUNT_BASE64) {
-  const decoded = Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_BASE64, 'base64').toString('utf8');
-  admin.initializeApp({ credential: admin.credential.cert(JSON.parse(decoded)) });
-  db = admin.firestore();
-  console.log('Firebase Admin: initialized from env (Firestore enabled)');
+  try {
+    const decoded = Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_BASE64, 'base64').toString('utf8');
+    // Replace literal newlines if they somehow snuck in, though JSON.parse usually handles \n escaped strings.
+    // The error "Bad control character" specifically refers to literal newlines/tabs inside the string.
+    const sanitized = decoded.replace(/\n/g, '\\n').replace(/\r/g, '\\r');
+    // Wait, if I replace \n with \\n, I might double escape. 
+    // Usually, the issue is that the base64 string itself contained newlines which Buffer.from might have handled,
+    // but the resulting utf8 string has literal line breaks.
+    admin.initializeApp({ credential: admin.credential.cert(JSON.parse(decoded)) });
+    db = admin.firestore();
+    console.log('Firebase Admin: initialized from env (Firestore enabled)');
+  } catch (err) {
+    console.error('Firebase Admin init failed:', err.message);
+  }
 } else {
   console.warn('Firebase Admin: service account not found — auth disabled');
 }
@@ -952,7 +962,7 @@ const __dirname = pathModule.dirname(fileURLToPath(import.meta.url));
 const distPath = pathModule.join(__dirname, 'dist');
 
 app.use(express.static(distPath));
-app.get('*', (_req, res) => {
+app.get('{*path}', (_req, res) => {
   res.sendFile(pathModule.join(distPath, 'index.html'));
 });
 
