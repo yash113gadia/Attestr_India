@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" fill="none">
+  <!-- Outermost arc - light gray/sage -->
+  <path d="M 0 280 A 280 280 0 0 1 280 0" stroke="#c8d8c8" stroke-width="28" fill="none" opacity="0.5"/>
+  <!-- Middle arc - slightly greener -->
+  <path d="M 0 220 A 220 220 0 0 1 220 0" stroke="#a8c8a8" stroke-width="22" fill="none" opacity="0.4"/>
+  <!-- Inner arc - green tinted -->
+  <path d="M 0 160 A 160 160 0 0 1 160 0" stroke="#88b888" stroke-width="18" fill="none" opacity="0.3"/>
+  <!-- Innermost - subtle -->
+  <path d="M 0 100 A 100 100 0 0 1 100 0" stroke="#78a878" stroke-width="14" fill="none" opacity="0.2"/>
+</svg>

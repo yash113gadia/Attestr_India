@@ -1,0 +1,18 @@
+/* Attestr Extension — Content Script Styles */
+
+@keyframes attestr-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.attestr-floating-badge {
+  all: initial !important;
+  position: fixed !important;
+  z-index: 2147483647 !important;
+}
+
+.attestr-floating-card {
+  all: initial !important;
+  position: fixed !important;
+  z-index: 2147483647 !important;
+}

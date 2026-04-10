@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 220" fill="none">
+  <!-- Outermost arc -->
+  <path d="M 300 0 A 220 220 0 0 1 80 220" stroke="#c8d8c8" stroke-width="24" fill="none" opacity="0.5"/>
+  <!-- Middle arc -->
+  <path d="M 300 50 A 170 170 0 0 1 130 220" stroke="#a8c8a8" stroke-width="20" fill="none" opacity="0.4"/>
+  <!-- Inner arc -->
+  <path d="M 300 100 A 120 120 0 0 1 180 220" stroke="#88b888" stroke-width="16" fill="none" opacity="0.3"/>
+</svg>

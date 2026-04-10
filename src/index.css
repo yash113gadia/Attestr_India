@@ -1,0 +1,50 @@
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-void: #06070A;
+  --color-surface: #0D0F14;
+  --color-surface-raised: #14171F;
+  --color-surface-hover: #1B1F2B;
+  --color-rule: #242936;
+  --color-rule-light: #1A1E29;
+  --color-ink: #E2E4E9;
+  --color-ink-secondary: #9499A8;
+  --color-ink-tertiary: #585E70;
+  --color-ink-faint: #363B4A;
+  
+  /* Sovereign India Palette */
+  --color-accent: #6366F1; /* Bharat Indigo */
+  --color-accent-glow: rgba(99, 102, 241, 0.12);
+  
+  --color-kesari: #FF9933; /* Saffron Accent */
+  --color-kesari-glow: rgba(255, 153, 51, 0.1);
+  
+  --color-emerald: #128807; /* India Green */
+  --color-emerald-glow: rgba(18, 136, 7, 0.1);
+
+  --color-verified: #128807;
+  --color-verified-glow: rgba(18, 136, 7, 0.12);
+  
+  --color-danger: #EF4444;
+  --color-danger-glow: rgba(239, 68, 68, 0.1);
+  --color-caution: #F59E0B;
+  --color-caution-glow: rgba(245, 158, 11, 0.1);
+
+  --font-serif: 'Instrument Serif', Georgia, serif;
+  --font-sans: 'DM Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Consolas', monospace;
+}
+
+* { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+body {
+  margin: 0;
+  background: var(--color-void);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+::selection { background: var(--color-accent); color: white; }
