@@ -952,12 +952,12 @@ const __dirname = pathModule.dirname(fileURLToPath(import.meta.url));
 const distPath = pathModule.join(__dirname, 'dist');
 
 app.use(express.static(distPath));
-app.get('{*path}', (_req, res) => {
+app.get('*', (_req, res) => {
   res.sendFile(pathModule.join(distPath, 'index.html'));
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on http://0.0.0.0:${PORT}`);
   console.log(`Local chain: ${blockchain.getChain().length} blocks | Valid: ${blockchain.isChainValid()}`);
   console.log(`Sepolia: ${contract ? 'ENABLED' : 'DISABLED (local only)'}`);
 });
