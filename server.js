@@ -31,7 +31,14 @@ if (existsSync(SERVICE_ACCOUNT_PATH)) {
 // Connect Firestore to blockchain module & restore chain if local file is empty
 if (db) {
   setFirestore(db);
-  blockchain.loadFromFirestore().catch(() => {});
+  blockchain.loadFromFirestore().then(() => {
+    // After loading, if the local chain is valid and has enough blocks, sync it to Firestore
+    if (blockchain.isChainValid() && blockchain.getChain().length > 1) {
+      blockchain.syncToFirestore().catch(() => {});
+    }
+  }).catch(() => {});
+  // Restore events log from Firestore (for Railway ephemeral FS)
+  restoreEventsFromFirestore().catch(() => {});
 }
 
 // ── Verification Audit Log ──
@@ -61,6 +68,7 @@ function logVerification(sha256, { userId, userName, source }) {
   // Cap at 100 entries per file
   if (auditLog[sha256].length > 100) auditLog[sha256] = auditLog[sha256].slice(-100);
   saveAuditLog();
+  // Firestore sync
   // Firestore sync (fire-and-forget)
   if (db) {
     const entry = auditLog[sha256].at(-1);
@@ -84,15 +92,48 @@ function saveEventsLog() {
   } catch (err) { console.warn('Failed to save events log:', err.message); }
 }
 
+// Restore events from Firestore if local file is empty (Railway ephemeral FS)
+async function restoreEventsFromFirestore() {
+  if (!db || Object.keys(eventsLog).length > 0) return;
+  try {
+    // Try new batch format first
+    const snap = await db.collection('eventsLogFull').get();
+    if (!snap.empty) {
+      snap.docs.forEach(doc => { eventsLog[doc.id] = doc.data().events || []; });
+      saveEventsLog();
+      console.log(`Restored events for ${snap.size} files from Firestore (batch format).`);
+      return;
+    }
+    // Fall back to old subcollection format: eventsLog/{sha256}/entries/{auto}
+    const parentSnap = await db.collection('eventsLog').get();
+    if (!parentSnap.empty) {
+      for (const parentDoc of parentSnap.docs) {
+        const sha256 = parentDoc.id;
+        const entriesSnap = await parentDoc.ref.collection('entries').orderBy('timestamp', 'asc').get();
+        if (!entriesSnap.empty) {
+          eventsLog[sha256] = entriesSnap.docs.map(d => d.data());
+        }
+      }
+      saveEventsLog();
+      // Also backfill the new batch format for next time
+      for (const [sha256, events] of Object.entries(eventsLog)) {
+        db.collection('eventsLogFull').doc(sha256).set({ events }).catch(() => {});
+      }
+      console.log(`Restored events for ${Object.keys(eventsLog).length} files from Firestore (subcollection format).`);
+    }
+  } catch (err) { console.warn('Events restore failed:', err.message); }
+}
+
 function logEvent(sha256, event) {
   if (!eventsLog[sha256]) eventsLog[sha256] = [];
   eventsLog[sha256].push({ ...event, timestamp: new Date().toISOString() });
   if (eventsLog[sha256].length > 200) eventsLog[sha256] = eventsLog[sha256].slice(-200);
   saveEventsLog();
-  // Firestore sync (fire-and-forget)
+  // Firestore sync (fire-and-forget) — save individual entry + full array
   if (db) {
     const entry = eventsLog[sha256].at(-1);
     db.collection('eventsLog').doc(sha256).collection('entries').add(entry).catch(() => {});
+    db.collection('eventsLogFull').doc(sha256).set({ events: eventsLog[sha256] }).catch(() => {});
   }
 }
 
@@ -513,10 +554,31 @@ app.get('/api/chain', async (req, res) => {
 app.get('/api/my-media/:userId', (req, res) => {
   const { userId } = req.params;
   const chain = blockchain.getChain();
-  const userBlocks = chain.filter((b) => b.data?.userId === userId);
+
+  // Files the user originally registered
+  const registeredBlocks = chain.filter((b) => b.data?.userId === userId);
+
+  // Files transferred TO this user (current custodian via transfer events)
+  const transferredBlocks = [];
+  for (const [sha256, events] of Object.entries(eventsLog)) {
+    const transfers = events.filter(e => e.type === 'custody-transferred');
+    if (transfers.length === 0) continue;
+    const lastTransfer = transfers[transfers.length - 1];
+    if (lastTransfer.toId === userId) {
+      // This user is the current custodian — find the block
+      const block = chain.find(b => b.data?.sha256 === sha256);
+      if (block && block.data?.userId !== userId) {
+        transferredBlocks.push(block);
+      }
+    }
+  }
+
+  const allBlocks = [...registeredBlocks, ...transferredBlocks];
   res.json({
-    blocks: userBlocks,
-    count: userBlocks.length,
+    blocks: allBlocks,
+    count: allBlocks.length,
+    registered: registeredBlocks.length,
+    received: transferredBlocks.length,
   });
 });
 
@@ -601,6 +663,22 @@ app.get('/api/status', async (req, res) => {
   }
 
   res.json(status);
+});
+
+// ── Sync local data to Firestore (one-time backfill) ──
+app.post('/api/sync-firestore', async (req, res) => {
+  if (!db) return res.status(503).json({ error: 'Firestore not available' });
+  try {
+    // Sync blockchain
+    await blockchain.syncToFirestore();
+    // Sync events log
+    for (const [sha256, events] of Object.entries(eventsLog)) {
+      await db.collection('eventsLogFull').doc(sha256).set({ events });
+    }
+    res.json({ success: true, blocks: blockchain.getChain().length, eventFiles: Object.keys(eventsLog).length });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // ── Tier 3: Multi-party Co-attestation ──

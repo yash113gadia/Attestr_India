@@ -14,6 +14,8 @@ class Block {
     this.data = data;
     this.previousHash = previousHash;
     this.nonce = 0;
+    // Freeze the exact JSON serialization at creation time so hash is reproducible
+    this._dataJson = JSON.stringify(this.data);
     this.hash = this.calculateHash();
   }
 
@@ -23,7 +25,7 @@ class Block {
         this.index +
           this.previousHash +
           this.timestamp +
-          JSON.stringify(this.data) +
+          (this._dataJson || JSON.stringify(this.data)) +
           this.nonce
       )
       .digest('hex');
@@ -51,6 +53,7 @@ class Blockchain {
         const chain = raw.map((b) => {
           const block = new Block(b.index, b.timestamp, b.data, b.previousHash);
           block.nonce = b.nonce;
+          block._dataJson = b._dataJson || JSON.stringify(b.data);
           block.hash = b.hash;
           return block;
         });
@@ -75,6 +78,8 @@ class Blockchain {
           const b = doc.data();
           const block = new Block(b.index, b.timestamp, b.data, b.previousHash);
           block.nonce = b.nonce;
+          // Use preserved JSON serialization to avoid Firestore key-order issues
+          block._dataJson = b._dataJson || JSON.stringify(b.data);
           block.hash = b.hash;
           return block;
         });
@@ -90,7 +95,13 @@ class Blockchain {
     try {
       const dir = CHAIN_FILE.substring(0, CHAIN_FILE.lastIndexOf('/'));
       if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
-      writeFileSync(CHAIN_FILE, JSON.stringify(this.chain, null, 2));
+      // Include _dataJson in the saved chain for hash reproducibility
+      const serializable = this.chain.map(b => ({
+        index: b.index, timestamp: b.timestamp, data: b.data,
+        previousHash: b.previousHash, nonce: b.nonce, hash: b.hash,
+        _dataJson: b._dataJson || JSON.stringify(b.data),
+      }));
+      writeFileSync(CHAIN_FILE, JSON.stringify(serializable, null, 2));
     } catch (err) {
       console.warn('Failed to save chain:', err.message);
     }
@@ -114,10 +125,12 @@ class Blockchain {
     block.mineBlock(this.difficulty);
     this.chain.push(block);
     this.saveChain();
-    // Async Firestore sync (fire-and-forget)
+    // Async Firestore sync (fire-and-forget) — include _dataJson for hash reproducibility
     if (firestoreDb) {
+      const doc = JSON.parse(JSON.stringify(block));
+      doc._dataJson = block._dataJson;
       firestoreDb.collection('blockchain').doc(block.index.toString())
-        .set(JSON.parse(JSON.stringify(block)))
+        .set(doc)
         .catch(err => console.warn('Firestore block sync failed:', err.message));
     }
     return block;
@@ -162,6 +175,34 @@ class Blockchain {
 
   getChain() {
     return this.chain;
+  }
+
+  // Push entire local chain to Firestore (used to fix corrupt Firestore data)
+  async syncToFirestore() {
+    if (!firestoreDb) return;
+    try {
+      // Delete all existing blockchain docs
+      const snap = await firestoreDb.collection('blockchain').get();
+      const batch1 = firestoreDb.batch();
+      snap.docs.forEach(doc => batch1.delete(doc.ref));
+      await batch1.commit();
+      console.log(`Deleted ${snap.size} old Firestore blockchain docs.`);
+
+      // Write all blocks in batches of 500 (Firestore limit)
+      for (let i = 0; i < this.chain.length; i += 500) {
+        const batch = firestoreDb.batch();
+        const slice = this.chain.slice(i, i + 500);
+        for (const block of slice) {
+          const doc = JSON.parse(JSON.stringify(block));
+          doc._dataJson = block._dataJson || JSON.stringify(block.data);
+          batch.set(firestoreDb.collection('blockchain').doc(block.index.toString()), doc);
+        }
+        await batch.commit();
+      }
+      console.log(`Synced ${this.chain.length} blocks to Firestore.`);
+    } catch (err) {
+      console.warn('Firestore sync failed:', err.message);
+    }
   }
 }
 

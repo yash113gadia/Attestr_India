@@ -63,16 +63,22 @@ export default function ExplorerPage() {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} className="mb-6 md:mb-8">
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4 mb-4">
             {/* Main Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-px bg-rule rounded-sm overflow-hidden border border-rule">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-rule rounded-sm overflow-hidden border border-rule">
               <div className="bg-surface px-4 md:px-5 py-3 md:py-4">
                 <p className="text-[10px] font-mono text-ink-faint tracking-widest mb-1">YOUR RECORDS</p>
-                <p className="text-[22px] md:text-[26px] font-serif text-ink">{media.count}</p>
+                <p className="text-[22px] md:text-[26px] font-serif text-ink">{media.registered ?? media.count}</p>
               </div>
+              {(media.received > 0) && (
+              <div className="bg-surface px-4 md:px-5 py-3 md:py-4">
+                <p className="text-[10px] font-mono text-ink-faint tracking-widest mb-1">RECEIVED</p>
+                <p className="text-[22px] md:text-[26px] font-serif text-accent">{media.received}</p>
+              </div>
+              )}
               <div className="bg-surface px-4 md:px-5 py-3 md:py-4">
                 <p className="text-[10px] font-mono text-ink-faint tracking-widest mb-1">TOTAL ANCHORED</p>
                 <p className="text-[22px] md:text-[26px] font-serif text-ink">{chainInfo.length - 1}</p>
               </div>
-              <div className="bg-surface px-4 md:px-5 py-3 md:py-4 col-span-2 md:col-span-1">
+              <div className="bg-surface px-4 md:px-5 py-3 md:py-4">
                 <p className="text-[10px] font-mono text-ink-faint tracking-widest mb-1">LEDGER INTEGRITY</p>
                 <p className={`text-[22px] md:text-[26px] font-serif ${chainInfo.valid ? 'text-verified' : 'text-danger'}`}>{chainInfo.valid ? 'Valid' : 'Broken'}</p>
               </div>
@@ -204,6 +210,7 @@ function BlockRow({ block, index, userId, onRefresh }) {
         </div>
         <span className="text-[11px] text-ink-tertiary font-mono hidden sm:inline">#{block.index}</span>
         <span className="text-[11px] text-ink-tertiary hidden sm:inline">{new Date(block.timestamp).toLocaleDateString()}</span>
+        {block.data?.userId !== userId && <span className="text-[9px] font-mono bg-caution/15 text-caution px-1.5 py-0.5 rounded-full">RECEIVED</span>}
         {isRevoked && <span className="text-[9px] font-mono bg-danger/15 text-danger px-1.5 py-0.5 rounded-full">REVOKED</span>}
         {custody?.coSigners?.length > 0 && <span className="text-[9px] font-mono bg-accent/10 text-accent px-1.5 py-0.5 rounded-full">{custody.coSigners.length} CO-SIGNER{custody.coSigners.length > 1 ? 'S' : ''}</span>}
         <ChevronDown className={`w-4 h-4 text-ink-faint transition-transform ${expanded ? 'rotate-180' : ''}`} />
