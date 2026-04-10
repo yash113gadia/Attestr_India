@@ -67,28 +67,28 @@ Attestr spans **five surfaces** — web platform, Android app, Chrome extension,
 ┌─────────────────────────────────────────────────────────────────┐
 │                        CLIENT SURFACES                          │
 │                                                                 │
-│  ┌─────────────┐  ┌──────────────┐  ┌────────┐  ┌───────────┐  │
-│  │  Web App    │  │  Android App │  │ Chrome │  │  Desktop  │  │
-│  │  React 19   │  │  React Native│  │  Ext.  │  │  Agent    │  │
-│  │  Vite 8     │  │  Expo SDK 52 │  │  MV3   │  │  Node.js  │  │
-│  │  Tailwind 4 │  │  7-layer sec │  │        │  │  Watcher  │  │
-│  └──────┬──────┘  └──────┬───────┘  └───┬────┘  └─────┬─────┘  │
-│         │                │              │              │         │
+│  ┌─────────────┐  ┌──────────────┐  ┌────────┐  ┌───────────┐   │
+│  │  Web App    │  │  Android App │  │ Chrome │  │  Desktop  │   │
+│  │  React 19   │  │  React Native│  │  Ext.  │  │  Agent    │   │
+│  │  Vite 8     │  │  Expo SDK 52 │  │  MV3   │  │  Node.js  │   │
+│  │  Tailwind 4 │  │  7-layer sec │  │        │  │  Watcher  │   │
+│  └──────┬──────┘  └──────┬───────┘  └───┬────┘  └─────┬─────┘   │
+│         │                │              │             │         │
 │    Only hashes      Signed envelope   Hash only    Hash only    │
-│         │                │              │              │         │
-│         └────────────────┴──────────────┴──────────────┘         │
+│         │                │              │              │        │
+│         └────────────────┴──────────────┴──────────────┘        │
 │                              ↓                                  │
 ├─────────────────────────────────────────────────────────────────┤
 │                     SERVER (Express 5)                          │
 │                                                                 │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌───────────────────┐  │
-│  │ Register │ │ Verify   │ │ Custody  │ │ Firebase Auth     │  │
-│  │ endpoint │ │ endpoint │ │ Events   │ │ + Firestore Keys  │  │
-│  └────┬─────┘ └────┬─────┘ └──────────┘ └───────────────────┘  │
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌───────────────────┐   │
+│  │ Register │ │ Verify   │ │ Custody  │ │ Firebase Auth     │   │
+│  │ endpoint │ │ endpoint │ │ Events   │ │ + Firestore Keys  │   │
+│  └────┬─────┘ └────┬─────┘ └──────────┘ └───────────────────┘   │
 │       └─────┬──────┘                                            │
 │             ↓ ethers.js 6                                       │
 ├─────────────────────────────────────────────────────────────────┤
-│                    ETHEREUM SEPOLIA                              │
+│                    ETHEREUM SEPOLIA                             │
 │                                                                 │
 │  MediaRegistry.sol @ 0x37FCD33D5FF07cfa3A75D27B4ec4cF09e458dfac │
 │  ┌──────────────────────────────────────────────────────────┐   │
@@ -142,14 +142,14 @@ Self-serve API key management via the dashboard. Third-party apps can register a
 ## Features (30+ shipped)
 
 ### Blockchain & Cryptography
-| Feature | Description |
-|---------|-------------|
-| SHA-256 hashing | Client-side via Web Workers — file never uploaded |
-| Perceptual dHash | 256-bit difference hash for fuzzy/near-duplicate matching |
-| On-chain registration | Immutable record on Ethereum Sepolia with TX receipt |
-| Instant verification | Exact match (SHA-256) + fuzzy match (dHash Hamming distance) |
-| Pre-reg duplicate check | Warns before registration if hash already exists |
-| Etherscan proof | Direct link to blockchain transaction for every registration |
+| Feature                  | Description                                                  |
+|--------------------------|--------------------------------------------------------------|
+| SHA-256 hashing          | Client-side via Web Workers — file never uploaded            |
+| Perceptual dHash         | 256-bit difference hash for fuzzy/near-duplicate matching    |
+| On-chain registration    | Immutable record on Ethereum Sepolia with TX receipt         |
+| Instant verification     | Exact match (SHA-256) + fuzzy match (dHash Hamming distance) |
+| Pre-reg duplicate check  | Warns before registration if hash already exists             |
+| Etherscan proof          | Direct link to blockchain transaction for every registration |
 
 ### Forensic Analysis
 | Feature | Description |
