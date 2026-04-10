@@ -5,7 +5,7 @@ import { ethers } from 'ethers';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { createHash, randomBytes } from 'crypto';
 import admin from 'firebase-admin';
-import blockchain from './server/blockchain.js';
+import blockchain, { setFirestore } from './server/blockchain.js';
 
 // ── Firebase Admin Setup ──
 const SERVICE_ACCOUNT_PATH = './firebase-service-account.json';
@@ -15,8 +15,19 @@ if (existsSync(SERVICE_ACCOUNT_PATH)) {
   admin.initializeApp({ credential: admin.credential.cert(serviceAccount) });
   db = admin.firestore();
   console.log('Firebase Admin: initialized (Firestore enabled)');
+} else if (process.env.FIREBASE_SERVICE_ACCOUNT_BASE64) {
+  const decoded = Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_BASE64, 'base64').toString('utf8');
+  admin.initializeApp({ credential: admin.credential.cert(JSON.parse(decoded)) });
+  db = admin.firestore();
+  console.log('Firebase Admin: initialized from env (Firestore enabled)');
 } else {
   console.warn('Firebase Admin: service account not found — auth disabled');
+}
+
+// Connect Firestore to blockchain module & restore chain if local file is empty
+if (db) {
+  setFirestore(db);
+  blockchain.loadFromFirestore().catch(() => {});
 }
 
 // ── Verification Audit Log ──
@@ -46,6 +57,11 @@ function logVerification(sha256, { userId, userName, source }) {
   // Cap at 100 entries per file
   if (auditLog[sha256].length > 100) auditLog[sha256] = auditLog[sha256].slice(-100);
   saveAuditLog();
+  // Firestore sync (fire-and-forget)
+  if (db) {
+    const entry = auditLog[sha256].at(-1);
+    db.collection('auditLogs').doc(sha256).collection('entries').add(entry).catch(() => {});
+  }
 }
 
 // ── Chain of Custody Event Log ──
@@ -69,6 +85,11 @@ function logEvent(sha256, event) {
   eventsLog[sha256].push({ ...event, timestamp: new Date().toISOString() });
   if (eventsLog[sha256].length > 200) eventsLog[sha256] = eventsLog[sha256].slice(-200);
   saveEventsLog();
+  // Firestore sync (fire-and-forget)
+  if (db) {
+    const entry = eventsLog[sha256].at(-1);
+    db.collection('eventsLog').doc(sha256).collection('entries').add(entry).catch(() => {});
+  }
 }
 
 // ── Auth Middleware (optional — extracts user if token present) ──

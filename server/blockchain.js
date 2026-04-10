@@ -2,6 +2,10 @@ import { createHash } from 'crypto';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 
 const CHAIN_FILE = 'data/chain.json';
+let firestoreDb = null;
+
+// Called by server.js after Firebase init
+export function setFirestore(db) { firestoreDb = db; }
 
 class Block {
   constructor(index, timestamp, data, previousHash = '') {
@@ -44,7 +48,6 @@ class Blockchain {
     try {
       if (existsSync(CHAIN_FILE)) {
         const raw = JSON.parse(readFileSync(CHAIN_FILE, 'utf8'));
-        // Reconstruct Block instances so calculateHash works
         const chain = raw.map((b) => {
           const block = new Block(b.index, b.timestamp, b.data, b.previousHash);
           block.nonce = b.nonce;
@@ -60,6 +63,27 @@ class Blockchain {
       console.warn('Failed to load chain from disk:', err.message);
     }
     return [this.createGenesisBlock()];
+  }
+
+  // Restore chain from Firestore when local file is missing (e.g. Vercel/Render)
+  async loadFromFirestore() {
+    if (!firestoreDb || this.chain.length > 1) return; // already loaded from disk
+    try {
+      const snap = await firestoreDb.collection('blockchain').orderBy('index', 'asc').get();
+      if (!snap.empty && snap.size > this.chain.length) {
+        this.chain = snap.docs.map(doc => {
+          const b = doc.data();
+          const block = new Block(b.index, b.timestamp, b.data, b.previousHash);
+          block.nonce = b.nonce;
+          block.hash = b.hash;
+          return block;
+        });
+        console.log(`Restored ${this.chain.length} blocks from Firestore.`);
+        this.saveChain(); // persist locally
+      }
+    } catch (err) {
+      console.warn('Firestore chain load failed:', err.message);
+    }
   }
 
   saveChain() {
@@ -90,6 +114,12 @@ class Blockchain {
     block.mineBlock(this.difficulty);
     this.chain.push(block);
     this.saveChain();
+    // Async Firestore sync (fire-and-forget)
+    if (firestoreDb) {
+      firestoreDb.collection('blockchain').doc(block.index.toString())
+        .set(JSON.parse(JSON.stringify(block)))
+        .catch(err => console.warn('Firestore block sync failed:', err.message));
+    }
     return block;
   }
 
