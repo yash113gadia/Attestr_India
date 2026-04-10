@@ -18,19 +18,11 @@ if (existsSync(SERVICE_ACCOUNT_PATH)) {
 } else if (process.env.FIREBASE_SERVICE_ACCOUNT_BASE64) {
   try {
     const decoded = Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_BASE64, 'base64').toString('utf8');
-    // Ensure no literal newlines or control characters break JSON.parse
-    const jsonString = decoded.replace(/[\u0000-\u001F\u007F-\u009F]/g, (match) => {
-      if (match === '\n') return '\\n';
-      if (match === '\r') return '\\r';
-      if (match === '\t') return '\\t';
-      return '';
-    });
-    admin.initializeApp({ credential: admin.credential.cert(JSON.parse(jsonString)) });
+    admin.initializeApp({ credential: admin.credential.cert(JSON.parse(decoded)) });
     db = admin.firestore();
     console.log('Firebase Admin: initialized from env (Firestore enabled)');
   } catch (err) {
     console.error('Firebase Admin init failed:', err.message);
-    process.exit(1); // Exit so Railway knows the deploy failed
   }
 } else {
   console.warn('Firebase Admin: service account not found — auth disabled');
