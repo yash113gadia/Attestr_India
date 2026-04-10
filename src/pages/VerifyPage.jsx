@@ -213,12 +213,21 @@ export default function VerifyPage() {
 
               <div className="flex items-center justify-between">
                 <span className="text-[11px] text-ink-faint font-mono">No sign-in required</span>
-                <button onClick={() => setShowScanner(s => !s)} className="flex items-center gap-1.5 text-[11px] text-accent hover:text-accent/80 font-mono transition">
-                  <QrCode className="w-3.5 h-3.5" strokeWidth={1.5} />
-                  {showScanner ? 'Close scanner' : 'Scan QR code'}
-                </button>
                 <span className="text-[11px] text-ink-faint font-mono">max 100MB</span>
               </div>
+
+              {/* QR Camera Scanner Button */}
+              <button
+                onClick={() => setShowScanner(s => !s)}
+                className={`w-full flex items-center justify-center gap-2.5 py-3 px-4 rounded-sm border transition text-[13px] font-medium ${
+                  showScanner
+                    ? 'bg-accent/10 border-accent/40 text-accent'
+                    : 'bg-surface border-rule hover:border-accent/40 text-ink-secondary hover:text-accent'
+                }`}
+              >
+                <Camera className="w-4.5 h-4.5" strokeWidth={1.5} />
+                {showScanner ? 'Close Camera' : 'Scan QR Code with Camera'}
+              </button>
 
               {showScanner && (
                 <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>

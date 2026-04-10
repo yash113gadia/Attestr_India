@@ -1,15 +1,16 @@
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Lock, Fingerprint, Eye, ChevronRight, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Lock, Fingerprint, Eye, ChevronRight, ShieldCheck, Camera } from 'lucide-react';
 import UploadZone from '../../components/UploadZone';
 import HashProgress from '../../components/HashProgress';
 import ResultCard from '../../components/ResultCard';
 import CompareView from '../../components/CompareView';
 import ELAViewer from '../../components/ELAViewer';
 import ExifPanel from '../../components/ExifPanel';
+import QRScanner from '../../components/QRScanner';
 import { hashFile } from '../../lib/hash';
 import { extractExif } from '../../lib/exif';
-import { verifyMedia } from '../../lib/api';
+import { verifyMedia, getCustodyTimeline } from '../../lib/api';
 import { getFileCategory, getFileMeta } from '../../lib/fileTypes';
 
 const slide = { hidden: { opacity: 0, y: 12 }, show: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.04, duration: 0.25 } }) };
@@ -25,6 +26,27 @@ export default function MobileVerify() {
   const [error, setError] = useState(null);
   const [exifData, setExifData] = useState(null);
   const [showForensics, setShowForensics] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
+  const [qrVerifying, setQrVerifying] = useState(false);
+  const [qrResult, setQrResult] = useState(null);
+
+  function handleQrScan(rawValue) {
+    setShowScanner(false);
+    try {
+      const url = new URL(rawValue);
+      const sha256 = url.searchParams.get('sha256');
+      if (sha256 && sha256.length >= 16) {
+        setQrVerifying(true);
+        verifyMedia({ sha256 }).then(res => setQrResult(res))
+          .catch(() => setError('Verification failed for scanned QR.'))
+          .finally(() => setQrVerifying(false));
+      } else {
+        setError('Invalid QR code — no SHA-256 hash found.');
+      }
+    } catch {
+      setError('Invalid QR code URL.');
+    }
+  }
 
   function cleanupPreview() { if (previewRef.current) { URL.revokeObjectURL(previewRef.current); previewRef.current = null; } }
 
@@ -54,6 +76,42 @@ export default function MobileVerify() {
         {!file && (
           <motion.div key="upload" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-3">
             <UploadZone onFileSelect={handleFile} />
+
+            {/* QR Camera Scanner Button */}
+            <button
+              onClick={() => setShowScanner(s => !s)}
+              className={`w-full flex items-center justify-center gap-2.5 py-3 px-4 rounded-sm border transition text-[13px] font-medium ${
+                showScanner
+                  ? 'bg-accent/10 border-accent/40 text-accent'
+                  : 'bg-surface border-rule hover:border-accent/40 text-ink-secondary hover:text-accent'
+              }`}
+            >
+              <Camera className="w-4.5 h-4.5" strokeWidth={1.5} />
+              {showScanner ? 'Close Camera' : 'Scan QR Code with Camera'}
+            </button>
+
+            {showScanner && (
+              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
+                <QRScanner onScan={handleQrScan} onClose={() => setShowScanner(false)} />
+              </motion.div>
+            )}
+
+            {qrVerifying && (
+              <div className="flex items-center justify-center py-8 gap-2">
+                <div className="w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+                <span className="text-[12px] text-ink-secondary">Verifying…</span>
+              </div>
+            )}
+
+            {qrResult && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">
+                <ResultCard {...qrResult} />
+                <button onClick={() => setQrResult(null)} className="text-[11px] text-ink-faint hover:text-ink transition flex items-center gap-1">
+                  <ArrowLeft className="w-3 h-3" /> Clear QR result
+                </button>
+              </motion.div>
+            )}
+
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
               {['Instant lookup', 'Fuzzy match', 'Blockchain proof'].map((t) => (
                 <span key={t} className="text-[10px] font-mono text-ink-faint border border-rule-light px-2.5 py-1.5 rounded-full shrink-0">{t}</span>
