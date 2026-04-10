@@ -18,17 +18,19 @@ if (existsSync(SERVICE_ACCOUNT_PATH)) {
 } else if (process.env.FIREBASE_SERVICE_ACCOUNT_BASE64) {
   try {
     const decoded = Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_BASE64, 'base64').toString('utf8');
-    // Replace literal newlines if they somehow snuck in, though JSON.parse usually handles \n escaped strings.
-    // The error "Bad control character" specifically refers to literal newlines/tabs inside the string.
-    const sanitized = decoded.replace(/\n/g, '\\n').replace(/\r/g, '\\r');
-    // Wait, if I replace \n with \\n, I might double escape. 
-    // Usually, the issue is that the base64 string itself contained newlines which Buffer.from might have handled,
-    // but the resulting utf8 string has literal line breaks.
-    admin.initializeApp({ credential: admin.credential.cert(JSON.parse(decoded)) });
+    // Ensure no literal newlines or control characters break JSON.parse
+    const jsonString = decoded.replace(/[\u0000-\u001F\u007F-\u009F]/g, (match) => {
+      if (match === '\n') return '\\n';
+      if (match === '\r') return '\\r';
+      if (match === '\t') return '\\t';
+      return '';
+    });
+    admin.initializeApp({ credential: admin.credential.cert(JSON.parse(jsonString)) });
     db = admin.firestore();
     console.log('Firebase Admin: initialized from env (Firestore enabled)');
   } catch (err) {
     console.error('Firebase Admin init failed:', err.message);
+    process.exit(1); // Exit so Railway knows the deploy failed
   }
 } else {
   console.warn('Firebase Admin: service account not found — auth disabled');
