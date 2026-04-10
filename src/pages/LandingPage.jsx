@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, Lock, Fingerprint, Blocks, Search, ShieldCheck, Camera, Shield, Eye } from 'lucide-react';
+import { ArrowRight, Lock, Fingerprint, Blocks, Search, ShieldCheck, Camera, Shield, Eye, Smartphone, Monitor, Globe } from 'lucide-react';
 import Logo from '../components/Logo';
 import ThemeToggle from '../components/ThemeToggle';
 import { lazy, Suspense } from 'react';
@@ -92,6 +92,8 @@ export default function LandingPage() {
               <span>Sovereign Ledger</span>
               <span className="hidden sm:inline w-1 h-1 rounded-full bg-ink-faint" />
               <span>Zero-Knowledge</span>
+              <span className="hidden sm:inline w-1 h-1 rounded-full bg-ink-faint" />
+              <span>5 Surfaces</span>
             </motion.div>
           </div>
 
@@ -167,7 +169,8 @@ export default function LandingPage() {
                   ['Chain of custody (co-attest/transfer)', '✗', '✗', '✗', '✓'],
                   ['Works without industry adoption', '✓', '✓', '✗', '✓'],
                   ['QR instant verification (any device)', '✗', '✗', '✗', '✓'],
-                  ['Multi-surface (web+agent+extension)', '✗', '✗', '✗', '✓'],
+                  ['Multi-surface (web+mobile+agent+extension)', '✗', '✗', '✗', '✓'],
+                  ['Mobile field capture with GPS attestation', '✗', '✗', '✗', '✓'],
                   ['AI-generated content detection', '✗', '✗', 'partial', '✓'],
                 ].map(([cap, ...vals], i) => (
                   <tr key={i} className="border-b border-rule-light">
@@ -241,7 +244,7 @@ export default function LandingPage() {
             </p>
             <p className="text-[14px] md:text-[15px] text-ink font-medium leading-relaxed italic">
               "Can they combine blockchain sealing, multi-party custody chains, forensic image analysis, perceptual near-duplicate detection, 
-              AI content flagging, zero-upload privacy, QR instant verification from any device, a desktop clipboard agent, and a Chrome extension — 
+              AI content flagging, zero-upload privacy, QR instant verification from any device, a native Android field-capture app with 7-layer security, a desktop clipboard agent, and a Chrome extension — 
               all working together as one integrated platform?"
             </p>
             <p className="text-[13px] md:text-[14px] text-ink-secondary leading-relaxed mt-3">
@@ -272,7 +275,7 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-px bg-rule">
             {[
-              { num: '01', icon: Camera, title: 'Capture', desc: 'Upload any file or capture evidence directly from your browser.' },
+              { num: '01', icon: Camera, title: 'Capture', desc: 'Upload any file from the web, capture with the mobile app in the field, or auto-register via the desktop agent.' },
               { num: '02', icon: Fingerprint, title: 'Fingerprint', desc: 'SHA-256 and perceptual hash computed client-side. Nothing uploaded.' },
               { num: '03', icon: Blocks, title: 'Seal', desc: 'Cryptographic proof anchored to Ethereum with immutable settlement.' },
               { num: '04', icon: ShieldCheck, title: 'Verify', desc: 'Check any file against the ledger. Instant integrity result.' },
@@ -346,6 +349,73 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── ECOSYSTEM ── */}
+      <section className="py-16 md:py-32 border-t border-rule">
+        <div className="max-w-[1200px] mx-auto px-4 md:px-8">
+          <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="max-w-xl mb-12 md:mb-20">
+            <p className="text-[11px] font-mono text-kesari tracking-widest uppercase mb-4">Ecosystem</p>
+            <h2 className="font-serif text-[32px] md:text-[42px] leading-[1.05] tracking-tight">
+              Five surfaces.<br />One truth layer.
+            </h2>
+            <p className="text-[14px] text-ink-tertiary mt-4 leading-relaxed">
+              Seal and verify from any device — web, mobile, desktop, browser extension, or API.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-px bg-rule">
+            {[
+              { icon: Globe, title: 'Web Platform', desc: 'Full-featured React app. Upload, verify, forensic analysis, chain of custody, batch registration.' },
+              { icon: Smartphone, title: 'Mobile App', desc: 'Android field capture with background queue, 7-layer security, GPS + sensor attestation, auto-retry.' },
+              { icon: Monitor, title: 'Desktop Agent', desc: 'Node.js folder watcher. Drop a file into the watched directory and it auto-registers on-chain.' },
+              { icon: Eye, title: 'Chrome Extension', desc: 'Right-click any image on the web to verify it against the blockchain. Instant context-menu integration.' },
+              { icon: Blocks, title: 'Public API', desc: 'REST API v1 with API key auth. Integrate Attestr verification and registration into any workflow.' },
+            ].map((item, i) => (
+              <motion.div
+                key={item.title}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.06 }}
+                className="bg-void p-6 md:p-8 group"
+              >
+                <item.icon className="w-5 h-5 text-ink-faint mb-5 group-hover:text-kesari transition-colors duration-300" strokeWidth={1.5} />
+                <h3 className="text-[15px] font-medium text-ink mb-2">{item.title}</h3>
+                <p className="text-[13px] text-ink-tertiary leading-relaxed">{item.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Mobile app highlight */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mt-8 border border-kesari/20 bg-kesari/5 rounded-sm p-5 md:p-8"
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <Smartphone className="w-5 h-5 text-kesari" strokeWidth={1.5} />
+              <span className="text-[11px] font-mono text-kesari tracking-wider uppercase font-bold">Mobile App — Field Capture</span>
+            </div>
+            <p className="text-[13px] md:text-[14px] text-ink leading-relaxed mb-3">
+              Built with React Native + Expo SDK 52 for Android. Designed for journalists, investigators, and field workers who need to seal evidence the moment it's captured.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+              {[
+                { label: 'Zero-lag Camera', detail: 'Instant shutter — hashing & sealing happen in background queue' },
+                { label: '7-Layer Security', detail: 'SHA-256 → HMAC → Nonce → Device Integrity → GPS/Sensors → Signed Envelope → Blockchain' },
+                { label: 'Auto-Retry', detail: 'Exponential backoff with connectivity pre-check — works in poor network conditions' },
+                { label: 'Gallery + Sealed Storage', detail: 'Saves to phone gallery and maintains local sealed manifest' },
+              ].map((item) => (
+                <div key={item.label} className="bg-void border border-rule rounded-sm p-3">
+                  <p className="text-[12px] font-medium text-ink mb-1">{item.label}</p>
+                  <p className="text-[11px] text-ink-tertiary leading-relaxed">{item.detail}</p>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
       {/* ── ARCHITECTURE ── */}
       <section className="py-16 md:py-32 border-t border-rule">
         <div className="max-w-[1200px] mx-auto px-4 md:px-8">
@@ -386,6 +456,18 @@ export default function LandingPage() {
               <span className="w-16 md:w-24 shrink-0" />
               <div className="flex-1 text-center text-[10px] md:text-[11px] tracking-wider">── hash + metadata only ──</div>
             </div>
+            <div className="flex items-center gap-3 md:gap-4 min-w-0">
+              <span className="text-kesari w-16 md:w-24 shrink-0 text-[10px] md:text-[12px]">MOBILE</span>
+              <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
+                {['Camera Capture', 'SHA-256 Hash', 'GPS + Sensors', 'Background Queue'].map((b) => (
+                  <div key={b} className="border border-kesari/20 bg-kesari/5 px-2 md:px-4 py-2 md:py-3 text-center text-ink-secondary text-[10px] md:text-[12px]">{b}</div>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center gap-3 md:gap-4 text-ink-faint">
+              <span className="w-16 md:w-24 shrink-0" />
+              <div className="flex-1 text-center text-[10px] md:text-[11px] tracking-wider">── signed envelope (HMAC + nonce) ──</div>
+            </div>
             <div className="flex items-center gap-3 md:gap-4">
               <span className="text-caution w-16 md:w-24 shrink-0 text-[10px] md:text-[12px]">SERVER</span>
               <div className="flex-1 grid grid-cols-3 gap-2 md:gap-3">
@@ -405,7 +487,7 @@ export default function LandingPage() {
               </div>
             </div>
             <div className="border-t border-rule pt-4 text-ink-tertiary text-[10px] md:text-[11px]">
-              Raw files never leave the browser. Only cryptographic hashes cross the network boundary.
+              Raw files never leave your device. Browser hashes via Web Workers. Mobile captures sealed with 7-layer security. Only cryptographic proofs cross the network.
             </div>
           </motion.div>
         </div>

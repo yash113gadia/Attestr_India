@@ -35,3 +35,26 @@ test-images/
 *.sln
 *.sw?
 .vercel
+
+# Presentations & generated docs
+*.pptx
+*.docx
+~$*
+Attestr_Slides.html
+project-plan.html
+
+# Doc/PPT generator scripts
+generate-*.js
+
+# Dev-only config
+hardhat.config.cjs
+eslint.config.js
+.node-version
+.npmrc
+
+# Build scripts (contract already deployed)
+scripts/
+
+# PPT assets
+public/ppt/
+public/ppt-*

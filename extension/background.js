@@ -73,7 +73,11 @@ async function registerSingleImage(imageUrl, tabId) {
         verified: true,
         status: "verified",
         timestamp: Date.now(),
-        details: { status: "verified", message: data.error || "Already registered." },
+        details: {
+          status: "verified",
+          message: data.error || "Already registered.",
+          registrant: data.registrant || null,
+        },
       };
       await storeVerification(result);
       try {
@@ -93,6 +97,10 @@ async function registerSingleImage(imageUrl, tabId) {
           status: "verified",
           message: `Registered on Ethereum Sepolia. ${data.onChain?.etherscanUrl ? 'Tx: ' + data.onChain.etherscanUrl : ''}`,
           onChain: data.onChain,
+          registrant: {
+            name: data.block?.data?.userName || 'You',
+            photo: data.block?.data?.userPhoto || null,
+          },
         },
       };
       await storeVerification(result);

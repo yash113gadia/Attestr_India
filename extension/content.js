@@ -90,11 +90,12 @@ function createInfoCard(status, details) {
   let registrantLine = "";
   if (isVerified) {
     const reg = details?.details?.registrant;
-    const regName = reg?.name && reg.name !== 'Unknown' ? reg.name : null;
+    const regName = reg?.name && reg.name !== 'Unknown' && reg.name !== 'Anonymous' && reg.name !== 'anonymous' ? reg.name : null;
     const regPhoto = reg?.photo || null;
-    const addr = details?.details?.onChain?.registeredBy;
+    const addr = details?.details?.onChain?.registeredBy || reg?.wallet;
     const ts = details?.details?.onChain?.timestamp;
-    const dateStr = ts ? new Date(ts * 1000).toLocaleString() : "";
+    const regAt = details?.details?.registeredAt;
+    const dateStr = ts ? new Date(ts * 1000).toLocaleString() : regAt ? new Date(regAt).toLocaleString() : "";
 
     if (regName) {
       const photoHtml = regPhoto

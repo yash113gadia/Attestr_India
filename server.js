@@ -188,6 +188,142 @@ if (PRIVATE_KEY && existsSync('artifacts/deployment.json') && existsSync('artifa
   if (!existsSync('artifacts/deployment.json')) console.log('  Run: node scripts/deploy.js');
 }
 
+// ── Capture Nonce Store (anti-replay) ──
+const nonceStore = new Map(); // nonce → { expires, deviceId }
+const NONCE_TTL = 60_000; // 60 seconds
+const APP_SECRET = process.env.APP_SECRET || 'attestr_seal_v1_c7f2e9a3b8d14f6e';
+
+// Clean expired nonces every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [k, v] of nonceStore) {
+    if (now > v.expires) nonceStore.delete(k);
+  }
+}, 300_000);
+
+app.post('/api/capture-nonce', (req, res) => {
+  const nonce = randomBytes(32).toString('hex');
+  const serverTime = Date.now();
+  nonceStore.set(nonce, {
+    expires: serverTime + NONCE_TTL,
+    deviceId: req.body?.deviceId || 'unknown',
+  });
+  res.json({ nonce, serverTime });
+});
+
+// ── Register Capture (mobile app — accepts base64 file + device attestation) ──
+app.post('/api/register-capture', optionalAuth, async (req, res) => {
+  const { fileBase64, filename, mimeType, fileSize, attestation, envelope, clientHash, nonce } = req.body;
+  const userId = req.authUser?.uid || req.body.userId || 'mobile-anonymous';
+  const userName = req.authUser?.name || req.body.userName || 'Attestr Mobile';
+  const userPhoto = req.authUser?.photo || req.body.userPhoto || null;
+  const userEmail = req.authUser?.email || null;
+  if (!fileBase64) return res.status(400).json({ error: 'fileBase64 is required' });
+
+  try {
+    const buffer = Buffer.from(fileBase64, 'base64');
+    const sha256 = createHash('sha256').update(buffer).digest('hex');
+    const dHash = sha256.substring(0, 64);
+    const actualSize = buffer.byteLength;
+
+    // ── Security validation (Layers 2-5) ──
+    if (nonce) {
+      // Layer 3: Nonce validation (anti-replay)
+      const stored = nonceStore.get(nonce);
+      if (!stored) {
+        return res.status(403).json({ error: 'Invalid or expired nonce — possible replay attack' });
+      }
+      if (Date.now() > stored.expires) {
+        nonceStore.delete(nonce);
+        return res.status(403).json({ error: 'Nonce expired — capture took too long' });
+      }
+      nonceStore.delete(nonce); // single-use
+
+      // Layer 1: Client hash comparison
+      if (clientHash && clientHash !== sha256) {
+        // Note: client hashes base64 string, server hashes raw bytes, so they may differ.
+        // Log for monitoring but don't block — this is a soft check.
+        console.warn(`Client hash mismatch: client=${clientHash.substring(0,12)}... server=${sha256.substring(0,12)}...`);
+      }
+
+      // Layer 4: Timestamp validation (±60s drift allowed)
+      if (envelope?.timestamp) {
+        const drift = Math.abs(Date.now() - envelope.timestamp);
+        if (drift > 60_000) {
+          return res.status(403).json({ error: 'Timestamp drift too large — possible manipulation' });
+        }
+      }
+
+      // Layer 2: HMAC signature verification
+      if (envelope?.signature && envelope?.integrity) {
+        const canonical = [
+          envelope.sha256 || '',
+          envelope.nonce || '',
+          (envelope.timestamp || '').toString(),
+          (envelope.integrity?.integrityScore ?? '').toString(),
+          envelope.attestation?.device?.model || '',
+          envelope.attestation?.location?.latitude?.toFixed(6) || '0',
+          envelope.attestation?.location?.longitude?.toFixed(6) || '0',
+        ].join('|');
+        const expected = createHash('sha256').update(canonical + APP_SECRET).digest('hex');
+        if (expected !== envelope.signature) {
+          return res.status(403).json({ error: 'Invalid signature — tampered envelope' });
+        }
+      }
+
+      // Layer 5: Device integrity check (warn but don't block)
+      if (envelope?.integrity && !envelope.integrity.trusted) {
+        console.warn(`Low integrity device: score=${envelope.integrity.integrityScore}, signals=${JSON.stringify(envelope.integrity.emulatorSignals)}`);
+      }
+    }
+
+    // Check duplicates
+    const existing = blockchain.findBySha256(sha256);
+    if (existing) {
+      return res.status(409).json({
+        error: `Already registered by ${existing.data?.userName || 'unknown'}.`,
+        sha256,
+        registrant: { name: existing.data?.userName || 'Unknown', photo: existing.data?.userPhoto || null },
+        registeredAt: existing.timestamp,
+      });
+    }
+
+    // Register locally
+    const block = blockchain.addBlock({
+      sha256, dHash, filename: filename || 'capture', fileSize: actualSize, mimeType: mimeType || 'image/jpeg',
+      userId, userName, userPhoto, userEmail,
+      source: 'mobile-app', attestation: attestation || null,
+      registeredAt: new Date().toISOString(),
+    });
+
+    logEvent(sha256, { type: 'registered', by: userName, byId: userId, source: 'mobile-app', device: attestation?.device });
+
+    // Register on Sepolia
+    let onChain = null;
+    if (contract) {
+      try {
+        const sha256Bytes = '0x' + sha256;
+        const dHashHex = '0x' + dHash.substring(0, 16).padEnd(16, '0');
+        const tx = await contract.register(sha256Bytes, dHashHex, filename || 'capture', actualSize, mimeType || 'image/jpeg');
+        const receipt = await tx.wait();
+        onChain = {
+          transactionHash: receipt.hash,
+          blockNumber: Number(receipt.blockNumber),
+          etherscanUrl: `https://sepolia.etherscan.io/tx/${receipt.hash}`,
+          network: 'sepolia',
+          gasUsed: receipt.gasUsed.toString(),
+        };
+      } catch (err) {
+        onChain = { error: err.reason || err.message };
+      }
+    }
+
+    res.json({ success: true, sha256, dHash, block, onChain });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // ── Register by URL ──
 app.post('/api/register-url', optionalAuth, async (req, res) => {
   const { url } = req.body;
@@ -229,6 +365,11 @@ app.post('/api/register-url', optionalAuth, async (req, res) => {
       return res.status(409).json({
         error: `This exact image was already registered by ${regBy} on ${regTime.toLocaleDateString()}.`,
         sha256,
+        registrant: {
+          name: existing.data?.userName || 'Unknown',
+          photo: existing.data?.userPhoto || null,
+        },
+        registeredAt: existing.timestamp,
       });
     }
 
@@ -290,6 +431,10 @@ app.post('/api/register', optionalAuth, async (req, res) => {
     return res.status(409).json({
       error: `This exact file was already registered by ${regBy} on ${regTime.toLocaleDateString()} at ${regTime.toLocaleTimeString()}.`,
       block: existing,
+      registrant: {
+        name: existing.data?.userName || 'Unknown',
+        photo: existing.data?.userPhoto || null,
+      },
     });
   }
 

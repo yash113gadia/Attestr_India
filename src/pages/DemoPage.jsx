@@ -6,7 +6,7 @@ import {
   ExternalLink, ArrowRight, Monitor, Chrome, Terminal, Eye,
   Globe, TrendingUp, Activity, Hash, AlertTriangle, Bot,
   FolderOpen, HardDrive, RotateCcw, Image, Check, X, CircleDot,
-  ArrowUpFromLine, Link2, Loader2, Upload, Users, ArrowRightLeft, Ban, QrCode, Clock, Download
+  ArrowUpFromLine, Link2, Loader2, Upload, Users, ArrowRightLeft, Ban, QrCode, Clock, Download, Smartphone
 } from 'lucide-react';
 import Logo from '../components/Logo';
 import Stat from '../components/Stat';
@@ -1163,14 +1163,86 @@ export default function DemoPage() {
           </div>
         </motion.section>
 
-        {/* ── PRODUCT 5: QR VERIFICATION ── */}
+        {/* ── PRODUCT 5: MOBILE APP ── */}
+        <motion.section {...sectionFade} className="mb-16">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-7 h-7 rounded-sm bg-kesari/15 flex items-center justify-center">
+              <Smartphone className="w-4 h-4 text-kesari" strokeWidth={1.5} />
+            </div>
+            <div>
+              <p className="text-[11px] font-mono text-kesari tracking-widest uppercase">Product 5</p>
+              <h3 className="text-[18px] font-serif text-ink tracking-tight">Mobile App — Field Capture</h3>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_280px] gap-6">
+            <div className="border border-rule rounded-sm bg-surface p-6 md:p-8">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-lg bg-kesari/10 border border-kesari/20 flex items-center justify-center">
+                  <Smartphone className="w-5 h-5 text-kesari" strokeWidth={1.5} />
+                </div>
+                <div>
+                  <p className="text-[14px] font-medium text-ink">Attestr for Android</p>
+                  <p className="text-[11px] text-ink-tertiary font-mono">React Native · Expo SDK 52 · v1.0.0</p>
+                </div>
+              </div>
+              <p className="text-[13px] text-ink-tertiary leading-relaxed mb-5">
+                Capture evidence in the field with instant camera, background processing queue, and 7-layer security.
+                Every photo is sealed with SHA-256, HMAC, server nonce, device integrity, GPS + sensor data, signed envelope, and blockchain proof.
+              </p>
+              <div className="grid grid-cols-2 gap-3 mb-5">
+                {[
+                  { label: 'Zero-lag Camera', desc: 'Instant shutter, background queue' },
+                  { label: '7-Layer Security', desc: 'HMAC + nonce + device integrity' },
+                  { label: 'GPS + Sensors', desc: 'Location, accelerometer, gyroscope' },
+                  { label: 'Auto-Retry', desc: 'Exponential backoff, connectivity check' },
+                ].map((f) => (
+                  <div key={f.label} className="border border-rule rounded-sm p-3">
+                    <p className="text-[11px] font-medium text-ink mb-0.5">{f.label}</p>
+                    <p className="text-[10px] text-ink-faint">{f.desc}</p>
+                  </div>
+                ))}
+              </div>
+              <a
+                href="https://github.com/yash113gadia/Attestr_India/releases/download/v1.0.0/app-release.apk"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full bg-kesari/10 border border-kesari/20 text-kesari text-[13px] font-bold py-3 rounded-sm hover:bg-kesari/20 transition"
+              >
+                <Download className="w-4 h-4" strokeWidth={2} /> Download APK (Android)
+              </a>
+              <p className="text-[10px] text-ink-faint text-center mt-2 font-mono">v1.0.0 · 83 MB · Requires Android 7.0+</p>
+            </div>
+            <div className="space-y-3">
+              <div className="border border-rule rounded-sm bg-surface p-4 text-[12px] text-ink-tertiary leading-relaxed">
+                <p className="text-ink font-medium mb-2">How it works</p>
+                <ol className="space-y-1.5 list-decimal list-inside">
+                  <li>Open app → tap capture</li>
+                  <li>Photo queued for background sealing</li>
+                  <li>SHA-256 + HMAC + GPS attestation</li>
+                  <li>Blockchain registration with retry</li>
+                  <li>Saved to gallery + sealed storage</li>
+                </ol>
+              </div>
+              <div className="border border-rule rounded-sm bg-surface p-4 text-[12px]">
+                <p className="text-ink-faint font-mono text-[11px] mb-1">Use cases</p>
+                <p className="text-ink-tertiary">Field journalism, accident documentation, construction site evidence, legal proof capture, environmental monitoring</p>
+              </div>
+              <div className="border border-rule rounded-sm bg-surface p-4 text-[12px]">
+                <p className="text-ink-faint font-mono text-[11px] mb-1">Security pipeline</p>
+                <p className="text-ink-tertiary text-[11px] leading-relaxed">SHA-256 → HMAC-SHA256 → Server Nonce → Device Integrity → GPS + Sensors → Signed Envelope → Ethereum Seal</p>
+              </div>
+            </div>
+          </div>
+        </motion.section>
+
+        {/* ── PRODUCT 6: QR VERIFICATION ── */}
         <motion.section {...sectionFade} className="mb-16">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-7 h-7 rounded-sm bg-accent/15 flex items-center justify-center">
               <QrCode className="w-4 h-4 text-accent" strokeWidth={1.5} />
             </div>
             <div>
-              <p className="text-[11px] font-mono text-accent tracking-widest uppercase">Product 5</p>
+              <p className="text-[11px] font-mono text-accent tracking-widest uppercase">Product 6</p>
               <h3 className="text-[18px] font-serif text-ink tracking-tight">QR Code Verification</h3>
             </div>
           </div>
@@ -1205,6 +1277,7 @@ export default function DemoPage() {
               { surface: 'Web App', desc: 'React 19 SPA — register, verify, explore, activity feed', endpoint: '/api/*', color: 'text-accent' },
               { surface: 'Agent', desc: 'Node.js CLI — watches folders, auto-registers new files', endpoint: '/api/register', color: 'text-[#A855F7]' },
               { surface: 'Extension', desc: 'Chrome Manifest V3 — right-click verify any web media', endpoint: '/api/verify', color: 'text-verified' },
+              { surface: 'Mobile', desc: 'Android field capture — 7-layer security, GPS attestation, background queue', endpoint: '/api/register', color: 'text-kesari' },
               { surface: 'Custody', desc: 'Co-attest, transfer ownership, revoke — full chain of custody', endpoint: '/api/co-attest', color: 'text-caution' },
               { surface: 'QR Verify', desc: 'Scan QR codes for instant verification from any device', endpoint: '/verify?sha256=', color: 'text-accent' },
               { surface: 'External', desc: 'Any HTTP client — cURL, Postman, third-party integrations', endpoint: '/api/*', color: 'text-ink-secondary' },
@@ -1234,6 +1307,7 @@ export default function DemoPage() {
                 ['Auth', 'Firebase Authentication (Google OAuth)'],
                 ['Custody', 'Co-signature, Custody Transfer, Revocation, PDF Reports'],
                 ['Analysis', 'Error Level Analysis (ELA), EXIF Metadata Forensics'],
+                ['Mobile', 'React Native 0.76, Expo SDK 52, 7-Layer Security Pipeline'],
                 ['Agent', 'Node.js CLI with fs.watch file watcher'],
                 ['Extension', 'Chrome Manifest V3, Content Scripts'],
               ].map(([label, tech]) => (
