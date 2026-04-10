@@ -73,13 +73,13 @@ export async function generateCertificate(metadata) {
   ctx.fillStyle = '#FF9933';
   ctx.font = 'bold 11px "JetBrains Mono", monospace';
   ctx.letterSpacing = '4px';
-  ctx.fillText('BHARAT DIGITAL NOTARY', 60, 72);
+  ctx.fillText('BHARAT DIGITAL PROOF', 60, 72);
   ctx.letterSpacing = '0px';
 
   // Title
   ctx.fillStyle = '#E2E4E9';
   ctx.font = '48px "Instrument Serif", Georgia, serif';
-  ctx.fillText('Certificate of Attestation', 60, 130);
+  ctx.fillText('Certificate of Authenticity', 60, 130);
 
   // Hindi subtitle
   ctx.fillStyle = 'rgba(255, 153, 51, 0.6)';
@@ -112,7 +112,7 @@ export async function generateCertificate(metadata) {
   const sizeStr = fileSize ? (fileSize > 1048576 ? (fileSize / 1048576).toFixed(2) + ' MB' : (fileSize / 1024).toFixed(1) + ' KB') : '—';
   drawField('file size', sizeStr, col1, y);
   const dateStr = timestamp ? new Date(timestamp * 1000).toLocaleString() : new Date().toLocaleString();
-  drawField('notarization date', dateStr, col2, y);
+  drawField('seal date', dateStr, col2, y);
   y += rowH;
 
   if (registeredBy) {
@@ -165,7 +165,7 @@ export async function generateCertificate(metadata) {
   // Footer text
   ctx.fillStyle = 'rgba(255,255,255,0.25)';
   ctx.font = '10px "JetBrains Mono", monospace';
-  ctx.fillText('Attestr प्रमाण · Bharat Sovereign Notary · attestr.in', 60, H - 25);
+  ctx.fillText('Attestr प्रमाण · Bharat Sovereign Proof · attestr.in', 60, H - 25);
 
   ctx.fillStyle = 'rgba(255,255,255,0.15)';
   ctx.font = '9px "JetBrains Mono", monospace';

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ShieldCheck, FileUp, Blocks, Activity, Monitor } from 'lucide-react';
 import Logo from '../Logo';
 import AuthButton from '../AuthButton';
+import ThemeToggle from '../ThemeToggle';
 
 const tabs = [
   { to: '/register', icon: FileUp, label: 'Register' },
@@ -25,6 +26,7 @@ export default function MobileLayout() {
             <span className="text-[8px] text-kesari font-medium">प्रमाण</span>
           </Link>
           <AuthButton />
+          <ThemeToggle />
         </div>
       </header>
 

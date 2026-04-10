@@ -49,7 +49,7 @@ const ENDPOINTS = [
     method: 'POST',
     path: '/api/v1/register',
     title: 'Register Media',
-    description: 'Notarize a new media file on the Ethereum Sepolia blockchain. Requires an API key. The file is hashed server-side and the fingerprint is anchored on-chain.',
+    description: 'Seal a new media file on the Ethereum Sepolia blockchain. Requires an API key. The file is hashed server-side and the fingerprint is anchored on-chain.',
     headers: [
       { name: 'Content-Type', value: 'application/json', required: true },
       { name: 'x-api-key', value: 'your-api-key', required: true },
@@ -89,7 +89,7 @@ function CodeBlock({ code, language }) {
 
   return (
     <div className="relative group">
-      <pre className="bg-[#0a0a0a] border border-rule rounded-lg p-4 overflow-x-auto text-[12.5px] leading-relaxed font-mono text-ink-secondary">
+      <pre className="bg-surface-raised border border-rule rounded-lg p-4 overflow-x-auto text-[12.5px] leading-relaxed font-mono text-ink-secondary">
         <code>{code}</code>
       </pre>
       <button
@@ -341,7 +341,7 @@ function TryItSection() {
             placeholder="https://example.com/image.jpg"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            className="w-full bg-[#0a0a0a] border border-rule rounded-lg px-4 py-2.5 text-[13px] font-mono text-ink placeholder:text-ink-tertiary/50 focus:outline-none focus:border-ink-tertiary transition"
+            className="w-full bg-surface-raised border border-rule rounded-lg px-4 py-2.5 text-[13px] font-mono text-ink placeholder:text-ink-tertiary/50 focus:outline-none focus:border-ink-tertiary transition"
           />
         ) : (
           <div>
@@ -457,7 +457,7 @@ function ApiKeyManager() {
           placeholder="Key label (e.g. Production)"
           value={label}
           onChange={(e) => setLabel(e.target.value)}
-          className="flex-1 bg-[#0a0a0a] border border-rule rounded-lg px-3 py-2 text-[13px] font-mono text-ink placeholder:text-ink-tertiary/50 focus:outline-none focus:border-ink-tertiary transition"
+          className="flex-1 bg-surface-raised border border-rule rounded-lg px-3 py-2 text-[13px] font-mono text-ink placeholder:text-ink-tertiary/50 focus:outline-none focus:border-ink-tertiary transition"
         />
         <button
           type="submit"
@@ -535,7 +535,7 @@ export default function ApiDocsPage() {
           </h1>
         </div>
         <p className="text-[14px] text-ink-secondary leading-relaxed max-w-xl">
-          Integrate Attestr into your application. Verify media provenance and notarize content on the Ethereum blockchain programmatically.
+          Integrate Attestr into your application. Verify media provenance and seal content on the Ethereum blockchain programmatically.
         </p>
       </motion.div>
 
@@ -543,7 +543,7 @@ export default function ApiDocsPage() {
       <motion.div variants={fade} custom={1}>
         <div className="border border-rule rounded-xl p-5 space-y-3">
           <h3 className="text-[12px] font-mono text-ink-tertiary uppercase tracking-wider">Base URL</h3>
-          <div className="bg-[#0a0a0a] border border-rule rounded-lg px-4 py-2.5">
+          <div className="bg-surface-raised border border-rule rounded-lg px-4 py-2.5">
             <code className="text-[13px] font-mono text-ink">{BASE_URL || 'https://your-domain.vercel.app'}</code>
           </div>
         </div>

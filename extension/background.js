@@ -1,6 +1,6 @@
 // Attestr Media Verifier — Background Service Worker
 
-const API_BASE = "https://attestr-app.vercel.app/api";
+const API_BASE = "https://attestrindia-production.up.railway.app/api";
 const MAX_HISTORY = 50;
 
 // Create context menu on install

@@ -98,7 +98,7 @@ export async function generateNotarySeal(imageFile, metadata) {
         // Subtitle: NOTARIZED VIA ATTESTR
         ctx.fillStyle = '#FF9933';
         ctx.font = `bold ${Math.round(sealHeight * 0.09)}px JetBrains Mono, monospace`;
-        ctx.fillText('NOTARIZED VIA ATTESTR', textX, y + padding + sealHeight * 0.25);
+        ctx.fillText('SEALED VIA ATTESTR', textX, y + padding + sealHeight * 0.25);
 
         // Fingerprint Label
         ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
@@ -113,7 +113,7 @@ export async function generateNotarySeal(imageFile, metadata) {
 
         // Date Label
         ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-        ctx.fillText('NOTARIZATION DATE', textX, y + padding + sealHeight * 0.72);
+        ctx.fillText('SEAL DATE', textX, y + padding + sealHeight * 0.72);
 
         // Date Value
         ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';

@@ -88,12 +88,38 @@ function createInfoCard(status, details) {
   }
 
   let registrantLine = "";
-  if (isVerified && details?.details?.onChain?.registeredBy) {
-    const addr = details.details.onChain.registeredBy;
-    const short = addr.substring(0, 6) + "..." + addr.substring(38);
-    const ts = details.details.onChain.timestamp;
+  if (isVerified) {
+    const reg = details?.details?.registrant;
+    const regName = reg?.name && reg.name !== 'Unknown' ? reg.name : null;
+    const regPhoto = reg?.photo || null;
+    const addr = details?.details?.onChain?.registeredBy;
+    const ts = details?.details?.onChain?.timestamp;
     const dateStr = ts ? new Date(ts * 1000).toLocaleString() : "";
-    registrantLine = `<div style="font-size:10px;color:#9CA3AF;margin-top:4px;">Registered by <span style="font-family:monospace;color:#C4B5FD;">${short}</span></div>${dateStr ? `<div style="font-size:9px;color:#6B7280;margin-top:2px;">on ${dateStr}</div>` : ""}`;
+
+    if (regName) {
+      const photoHtml = regPhoto
+        ? `<img src="${regPhoto}" alt="" referrerpolicy="no-referrer" style="width:20px;height:20px;border-radius:50%;object-fit:cover;border:1px solid rgba(255,255,255,0.1);" />`
+        : `<span style="width:20px;height:20px;border-radius:50%;background:#6366F1;display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;font-weight:700;">${regName.charAt(0).toUpperCase()}</span>`;
+      registrantLine = `<div style="display:flex;align-items:center;gap:6px;margin-top:6px;padding:5px 6px;background:rgba(255,255,255,0.04);border-radius:4px;border:1px solid rgba(255,255,255,0.06);">
+        ${photoHtml}
+        <div style="min-width:0;flex:1;">
+          <div style="font-size:11px;color:#E2E4E9;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${regName}</div>
+          <div style="font-size:9px;color:#6B7280;">${dateStr ? 'Registered on ' + dateStr : 'Registered on Blockchain'}</div>
+        </div>
+      </div>`;
+    } else if (addr) {
+      const short = addr.substring(0, 6) + "..." + addr.substring(38);
+      registrantLine = `<div style="font-size:10px;color:#9CA3AF;margin-top:4px;">Registered by <span style="font-family:monospace;color:#C4B5FD;">${short}</span></div>${dateStr ? `<div style="font-size:9px;color:#6B7280;margin-top:2px;">on ${dateStr}</div>` : ""}`;
+    }
+  }
+
+  // Verification count
+  let verifyCountLine = "";
+  const vCount = details?.details?.verificationCount;
+  if (isVerified && vCount && vCount > 0) {
+    verifyCountLine = `<div style="display:flex;align-items:center;gap:4px;margin-top:4px;">
+      <span style="font-size:9px;color:#9CA3AF;">Verified ${vCount} time${vCount !== 1 ? 's' : ''}</span>
+    </div>`;
   }
 
   let extraLine = "";
@@ -111,7 +137,7 @@ function createInfoCard(status, details) {
       <span style="width:8px;height:8px;border-radius:50%;background:${statusColor};flex-shrink:0;"></span>
       <span style="font-size:12px;font-weight:600;color:${statusColor};">${statusText}</span>
     </div>
-    ${hashLine}${registrantLine}${timeLine}${extraLine}
+    ${hashLine}${registrantLine}${verifyCountLine}${timeLine}${extraLine}
     <div style="display:flex;align-items:center;gap:4px;margin-top:6px;padding-top:5px;border-top:1px solid rgba(255,255,255,0.08);">
       <span style="font-size:9px;color:#5C5F73;font-weight:600;">Attestr</span>
     </div>

@@ -108,7 +108,7 @@ export function generateCustodyReport(data) {
   // ── Attestation Note ──
   if (data.attestationNote || block?.data?.attestationNote) {
     const note = data.attestationNote || block.data.attestationNote;
-    sectionHeader(doc, 'ATTESTATION NOTE', M, y);
+    sectionHeader(doc, 'PROOF NOTE', M, y);
     y += 8;
     doc.setFont('helvetica', 'italic');
     doc.setFontSize(9);
@@ -121,7 +121,7 @@ export function generateCustodyReport(data) {
   // ── Device Attestation ──
   const dev = data.deviceInfo || block?.data?.deviceInfo;
   if (dev) {
-    sectionHeader(doc, 'DEVICE ATTESTATION', M, y);
+    sectionHeader(doc, 'DEVICE INFO', M, y);
     y += 8;
     y = kvRow(doc, 'Platform', dev.platform || 'N/A', M, y);
     y = kvRow(doc, 'Timezone', dev.timezone || 'N/A', M, y);
@@ -133,7 +133,7 @@ export function generateCustodyReport(data) {
   // ── Co-Signers ──
   if (data.coSigners?.length > 0) {
     if (y > 240) { doc.addPage(); y = M; }
-    sectionHeader(doc, `CO-ATTESTATIONS (${data.coSigners.length})`, M, y);
+    sectionHeader(doc, `CO-SIGNATURES (${data.coSigners.length})`, M, y);
     y += 8;
     for (const cs of data.coSigners) {
       doc.setFont('helvetica', 'normal');

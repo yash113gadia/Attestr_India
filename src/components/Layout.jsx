@@ -3,6 +3,7 @@ import { lazy, Suspense, useState } from 'react';
 import { Menu, X } from 'lucide-react';
 import AuthButton from './AuthButton';
 import Logo from './Logo';
+import ThemeToggle from './ThemeToggle';
 import ErrorBoundary from './ErrorBoundary';
 
 const GridBackground = lazy(() => import('./GridBackground'));
@@ -46,7 +47,7 @@ function TricolorStripe() {
   return (
     <div className="h-[2px] flex">
       <div className="flex-1 bg-[#FF9933] opacity-40" />
-      <div className="flex-1 bg-white opacity-20" />
+      <div className="flex-1 bg-ink-faint opacity-40" />
       <div className="flex-1 bg-[#128807] opacity-40" />
     </div>
   );
@@ -95,6 +96,7 @@ export default function Layout() {
             <NavLink to="/docs" className={link}>API</NavLink>
           </nav>
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             <div className="hidden md:block">
               <AuthButton />
             </div>

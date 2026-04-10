@@ -36,8 +36,8 @@ export default function ExplorerPage() {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="border border-rule rounded-sm bg-surface p-8 md:p-12 text-center">
           <Shield className="w-8 h-8 text-ink-faint mx-auto mb-4" strokeWidth={1.5} />
           <p className="text-[14px] text-ink mb-1">Sign in to view your ledger</p>
-          <p className="text-[12px] text-ink-tertiary mb-6">The Explorer shows files notarized under your account.</p>
-          <button onClick={signInWithGoogle} className="bg-white text-void text-[13px] font-medium px-6 py-2.5 rounded-sm hover:bg-ink transition">
+          <p className="text-[12px] text-ink-tertiary mb-6">The Explorer shows files registered under your account.</p>
+          <button onClick={signInWithGoogle} className="bg-accent text-white text-[13px] font-medium px-6 py-2.5 rounded-sm hover:brightness-110 transition">
             Continue with Google
           </button>
         </motion.div>
@@ -83,7 +83,7 @@ export default function ExplorerPage() {
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-2 h-2 rounded-full bg-verified animate-pulse" />
-                  <span className="text-[10px] font-mono text-verified tracking-widest uppercase font-bold">Active Notary Profile</span>
+                  <span className="text-[10px] font-mono text-verified tracking-widest uppercase font-bold">Active Profile</span>
                 </div>
                 <p className="text-[15px] font-serif text-ink mb-1 truncate">{user.displayName}</p>
                 <div className="flex flex-wrap gap-2">
@@ -122,8 +122,8 @@ export default function ExplorerPage() {
       {media && media.count === 0 && !loading && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="border border-rule rounded-sm bg-surface p-8 md:p-12 text-center">
           <FileText className="w-8 h-8 text-ink-faint mx-auto mb-3" strokeWidth={1.5} />
-          <p className="text-[13px] text-ink-secondary mb-1">No notarizations yet</p>
-          <p className="text-[12px] text-ink-faint">Go to the Notarize page to add your first record.</p>
+          <p className="text-[13px] text-ink-secondary mb-1">No records yet</p>
+          <p className="text-[12px] text-ink-faint">Go to the Register page to add your first record.</p>
         </motion.div>
       )}
 
@@ -255,7 +255,7 @@ function BlockRow({ block, index, userId, onRefresh }) {
                         <div className="text-[11px]">
                           <span className="text-ink font-medium">
                             {evt.type === 'registered' && `Registered by ${evt.by}`}
-                            {evt.type === 'co-attested' && `Co-attested by ${evt.by}`}
+                            {evt.type === 'co-attested' && `Co-signed by ${evt.by}`}
                             {evt.type === 'custody-transferred' && `Custody transferred to ${evt.toName}`}
                             {evt.type === 'revoked' && `Revoked by ${evt.by}`}
                           </span>
@@ -272,7 +272,7 @@ function BlockRow({ block, index, userId, onRefresh }) {
               {/* Co-signers */}
               {custody?.coSigners?.length > 0 && (
                 <div>
-                  <p className="text-[10px] font-mono text-ink-faint tracking-widest uppercase mb-2">Co-Attestations</p>
+                  <p className="text-[10px] font-mono text-ink-faint tracking-widest uppercase mb-2">Co-Signatures</p>
                   <div className="flex flex-wrap gap-2">
                     {custody.coSigners.map((cs, i) => (
                       <div key={i} className="flex items-center gap-1.5 bg-accent/5 border border-accent/15 rounded-full px-2.5 py-1">

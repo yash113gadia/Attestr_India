@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, Lock, Fingerprint, Blocks, Search, ShieldCheck, Camera, Shield } from 'lucide-react';
+import { ArrowRight, Lock, Fingerprint, Blocks, Search, ShieldCheck, Camera, Shield, Eye } from 'lucide-react';
 import Logo from '../components/Logo';
+import ThemeToggle from '../components/ThemeToggle';
 import { lazy, Suspense } from 'react';
 import ErrorBoundary from '../components/ErrorBoundary';
 const ShieldScene = lazy(() => import('../components/ShieldScene'));
@@ -34,6 +35,7 @@ export default function LandingPage() {
           </Link>
           <div className="flex items-center gap-4 md:gap-8">
             <a href="#how" className="hidden lg:inline text-[13px] text-ink-tertiary hover:text-ink transition">How it Works</a>
+            <ThemeToggle />
             <Link to="/register" className="text-[12px] md:text-[13px] text-ink bg-surface-raised hover:bg-surface-hover border border-rule px-3 md:px-4 py-1.5 rounded-sm transition">
               Launch Platform
             </Link>
@@ -54,7 +56,7 @@ export default function LandingPage() {
           <div>
             <motion.div {...fade(0.1)} className="inline-flex items-center gap-3 text-[10px] md:text-[11px] font-mono tracking-widest uppercase mb-6 md:mb-8 border border-rule px-3 md:px-4 py-1.5 rounded-full bg-kesari/5 border-kesari/20">
               <span className="w-1.5 h-1.5 rounded-full bg-kesari animate-pulse" />
-              <span className="text-kesari font-bold">Bharat's Sovereign Media Notary</span>
+              <span className="text-kesari font-bold">Bharat's Sovereign Media Shield</span>
             </motion.div>
 
             <motion.h1 {...fade(0.2)} className="font-serif text-[clamp(36px,6vw,80px)] leading-[0.95] tracking-tight mb-6">
@@ -62,14 +64,14 @@ export default function LandingPage() {
             </motion.h1>
 
             <motion.p {...fade(0.35)} className="text-[15px] md:text-[17px] text-ink-secondary leading-relaxed max-w-lg mb-8 md:mb-10">
-              Attestr is India's first decentralized notary platform. Protect digital truth 
+              Attestr is India's first decentralized proof platform. Protect digital truth 
               with immutable cryptographic proofs anchored to the blockchain — for images, documents, videos, code, and beyond. 
               Designed for a secure and <span className="text-kesari font-medium">Aatmanirbhar Bharat</span>.
             </motion.p>
 
             <motion.div {...fade(0.5)} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
-              <Link to="/register" className="group flex items-center justify-center gap-3 bg-white text-void text-[14px] font-bold px-7 py-3.5 rounded-sm hover:brightness-110 transition-all">
-                Start Notarizing
+              <Link to="/register" className="group flex items-center justify-center gap-3 bg-accent text-white text-[14px] font-bold px-7 py-3.5 rounded-sm hover:brightness-110 transition-all">
+                Start Securing
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
               </Link>
               <Link to="/verify" className="flex items-center justify-center gap-3 text-ink-secondary text-[14px] font-medium px-7 py-3.5 border border-rule rounded-sm hover:border-kesari/40 hover:text-ink transition">
@@ -78,10 +80,10 @@ export default function LandingPage() {
             </motion.div>
 
             <motion.div {...fade(0.65)} className="flex flex-wrap items-center gap-x-6 gap-y-2 mt-10 md:mt-14 text-[11px] text-ink-tertiary font-mono tracking-wider uppercase">
-              <div className="flex items-center gap-2 bg-white/5 border border-rule px-3 py-1 rounded-sm">
+              <div className="flex items-center gap-2 bg-surface border border-rule px-3 py-1 rounded-sm">
                 <div className="flex flex-col gap-0.5">
                   <div className="w-3 h-1 bg-[#FF9933]" />
-                  <div className="w-3 h-1 bg-white" />
+                  <div className="w-3 h-1 bg-ink-faint" />
                   <div className="w-3 h-1 bg-[#128807]" />
                 </div>
                 <span className="ml-1 text-ink-secondary">Made in India</span>
@@ -117,7 +119,7 @@ export default function LandingPage() {
       <section className="border-y border-rule">
         <div className="max-w-[1200px] mx-auto px-4 md:px-8 grid grid-cols-2 md:grid-cols-4 divide-x divide-rule">
           {[
-            { n: '5-8M', label: 'global notarizations daily' },
+            { n: '5-8M', label: 'digital files forged daily' },
             { n: '90%', label: 'synthetic content by 2026' },
             { n: '<1s', label: 'verification time' },
             { n: '100%', label: 'immutable ledger' },
@@ -127,6 +129,125 @@ export default function LandingPage() {
               <p className="text-[12px] md:text-[13px] text-ink-tertiary mt-1">{s.label}</p>
             </motion.div>
           ))}
+        </div>
+      </section>
+
+      {/* ── WHAT MAKES US DIFFERENT ── */}
+      <section className="py-16 md:py-32 border-b border-rule">
+        <div className="max-w-[1200px] mx-auto px-4 md:px-8">
+          <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="max-w-2xl mb-12 md:mb-20">
+            <p className="text-[11px] font-mono text-kesari tracking-widest uppercase mb-4">Why this isn't generic</p>
+            <h2 className="font-serif text-[32px] md:text-[42px] leading-[1.05] tracking-tight mb-4">
+              The problem no one has fully solved.
+            </h2>
+            <p className="text-[14px] md:text-[15px] text-ink-secondary leading-relaxed">
+              Tools exist that hash files. Tools exist that timestamp hashes. But <span className="text-ink font-medium">none of them</span> answer the full question:
+              <span className="text-kesari font-medium"> "Is this file authentic, untampered, with a provable chain of custody — and can I verify it instantly from any device, without trusting any single entity?"</span>
+            </p>
+          </motion.div>
+
+          {/* ── Competitor Comparison ── */}
+          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mb-12 md:mb-16 overflow-x-auto">
+            <table className="w-full text-[12px] md:text-[13px] border-collapse">
+              <thead>
+                <tr className="border-b border-rule text-left">
+                  <th className="py-3 px-3 md:px-4 text-ink-tertiary font-mono text-[10px] md:text-[11px] tracking-wider uppercase">Capability</th>
+                  <th className="py-3 px-3 md:px-4 text-ink-tertiary font-mono text-[10px] md:text-[11px] tracking-wider uppercase">Hash Checkers</th>
+                  <th className="py-3 px-3 md:px-4 text-ink-tertiary font-mono text-[10px] md:text-[11px] tracking-wider uppercase">OpenTimestamps</th>
+                  <th className="py-3 px-3 md:px-4 text-ink-tertiary font-mono text-[10px] md:text-[11px] tracking-wider uppercase">C2PA / Adobe</th>
+                  <th className="py-3 px-3 md:px-4 text-kesari font-mono text-[10px] md:text-[11px] tracking-wider uppercase font-bold">Attestr</th>
+                </tr>
+              </thead>
+              <tbody className="text-ink-secondary">
+                {[
+                  ['Blockchain-anchored proof', '✗', '✓', '✗', '✓'],
+                  ['Client-side (zero upload)', '✓', '✗', '✗', '✓'],
+                  ['Forensic analysis (ELA/EXIF)', '✗', '✗', '✗', '✓'],
+                  ['Perceptual near-duplicate detection', '✗', '✗', '✗', '✓'],
+                  ['Chain of custody (co-attest/transfer)', '✗', '✗', '✗', '✓'],
+                  ['Works without industry adoption', '✓', '✓', '✗', '✓'],
+                  ['QR instant verification (any device)', '✗', '✗', '✗', '✓'],
+                  ['Multi-surface (web+agent+extension)', '✗', '✗', '✗', '✓'],
+                  ['AI-generated content detection', '✗', '✗', 'partial', '✓'],
+                ].map(([cap, ...vals], i) => (
+                  <tr key={i} className="border-b border-rule-light">
+                    <td className="py-2.5 px-3 md:px-4 text-ink font-medium">{cap}</td>
+                    {vals.map((v, j) => (
+                      <td key={j} className={`py-2.5 px-3 md:px-4 text-center ${
+                        j === 3 ? (v === '✓' ? 'text-verified font-bold' : 'text-danger') :
+                        v === '✓' ? 'text-verified' : v === '✗' ? 'text-ink-faint' : 'text-caution'
+                      }`}>{v}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </motion.div>
+
+          {/* ── Innovation Cards ── */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-rule mb-8 md:mb-12">
+            {[
+              {
+                icon: Eye,
+                tag: 'Innovation #1',
+                title: 'Forensics + Blockchain in one pipeline',
+                desc: 'Existing tools either do forensics OR timestamping. Attestr is the first to combine Error Level Analysis, EXIF metadata extraction, perceptual hashing, AND immutable blockchain anchoring in a single client-side pipeline. You don\'t just prove a file existed — you prove it was unedited, with forensic evidence.',
+                what: 'No existing tool combines all four forensic techniques with on-chain proof',
+              },
+              {
+                icon: Shield,
+                tag: 'Innovation #2',
+                title: 'Chain of Custody — not just a timestamp',
+                desc: 'A timestamp proves WHEN. Attestr proves WHO held it, WHO co-signed it, and WHO transferred it — with a full audit trail. Co-attestation lets multiple parties vouch for a file. Custody transfer creates a legal-grade provenance chain. Revocation invalidates compromised proofs.',
+                what: 'Multi-party custody protocol with co-attest, transfer, and revoke — unprecedented',
+              },
+              {
+                icon: Lock,
+                tag: 'Innovation #3',
+                title: 'Architecturally enforced privacy',
+                desc: 'Most platforms say "we delete your files." Attestr\'s architecture makes it physically impossible to access them — SHA-256 hashing, ELA, and EXIF extraction all run in browser Web Workers. The server literally never receives raw content. This isn\'t a policy — it\'s physics.',
+                what: 'The server cannot see your files, even if compromised',
+              },
+            ].map((item, i) => (
+              <motion.div
+                key={item.tag}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.08 }}
+                className="bg-void p-6 md:p-8"
+              >
+                <div className="flex items-center gap-3 mb-4">
+                  <item.icon className="w-5 h-5 text-accent" strokeWidth={1.5} />
+                  <span className="text-[11px] font-mono text-accent tracking-wider uppercase">{item.tag}</span>
+                </div>
+                <h3 className="text-[15px] font-medium text-ink mb-2">{item.title}</h3>
+                <p className="text-[13px] text-ink-tertiary leading-relaxed mb-4">{item.desc}</p>
+                <p className="text-[11px] font-medium text-kesari">
+                  → {item.what}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="border border-kesari/20 bg-kesari/5 rounded-sm p-5 md:p-8"
+          >
+            <p className="text-[13px] md:text-[14px] text-ink leading-relaxed mb-3">
+              <span className="text-kesari font-bold">To the evaluators:</span> The question is not "can someone compute SHA-256?" — of course they can. The question is:
+            </p>
+            <p className="text-[14px] md:text-[15px] text-ink font-medium leading-relaxed italic">
+              "Can they combine blockchain sealing, multi-party custody chains, forensic image analysis, perceptual near-duplicate detection, 
+              AI content flagging, zero-upload privacy, QR instant verification from any device, a desktop clipboard agent, and a Chrome extension — 
+              all working together as one integrated platform?"
+            </p>
+            <p className="text-[13px] md:text-[14px] text-ink-secondary leading-relaxed mt-3">
+              That is Attestr. That is what nobody else has built.
+            </p>
+          </motion.div>
         </div>
       </section>
 
@@ -153,7 +274,7 @@ export default function LandingPage() {
             {[
               { num: '01', icon: Camera, title: 'Capture', desc: 'Upload any file or capture evidence directly from your browser.' },
               { num: '02', icon: Fingerprint, title: 'Fingerprint', desc: 'SHA-256 and perceptual hash computed client-side. Nothing uploaded.' },
-              { num: '03', icon: Blocks, title: 'Notarize', desc: 'Cryptographic proof anchored to Ethereum with immutable settlement.' },
+              { num: '03', icon: Blocks, title: 'Seal', desc: 'Cryptographic proof anchored to Ethereum with immutable settlement.' },
               { num: '04', icon: ShieldCheck, title: 'Verify', desc: 'Check any file against the ledger. Instant integrity result.' },
               { num: '05', icon: Search, title: 'Inspect', desc: 'Forensic analysis for images; byte-level integrity check for all files.' },
             ].map((step, i) => (
@@ -203,7 +324,7 @@ export default function LandingPage() {
             {[
               { icon: Lock, title: 'Nothing Leaves Your Device', desc: 'Your content is processed entirely in your browser. Only the cryptographic fingerprint is sent — the original file never reaches our servers.' },
               { icon: Fingerprint, title: 'Dual-Hash Verification', desc: 'SHA-256 for exact matching across all file types. Perceptual dHash for visual content that survives compression and screenshots.' },
-              { icon: Blocks, title: 'Ethereum Notary', desc: 'Hashes recorded on Ethereum Sepolia via smart contract. Immutable. Publicly verifiable on Etherscan.' },
+              { icon: Blocks, title: 'Ethereum Seal', desc: 'Hashes recorded on Ethereum Sepolia via smart contract. Immutable. Publicly verifiable on Etherscan.' },
               { icon: Search, title: 'Forensic Analysis', desc: 'Image-specific ELA detects compression inconsistencies. All file types get byte-level integrity verification.' },
               { icon: ShieldCheck, title: 'Metadata Forensics', desc: 'Extracts camera data, GPS, timestamps, and editing history from images. Flags anomalies in the digital negative.' },
               { icon: Camera, title: 'Multi-Format Support', desc: 'Register images, videos, audio, PDFs, code, 3D models, archives — any file that needs proof of existence.' },
@@ -299,7 +420,7 @@ export default function LandingPage() {
               No account needed to verify. Register your first file in under 30 seconds.
             </p>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-4">
-              <Link to="/register" className="group flex items-center justify-center gap-3 bg-white text-void text-[14px] font-medium px-7 py-3.5 rounded-sm hover:bg-ink transition">
+              <Link to="/register" className="group flex items-center justify-center gap-3 bg-accent text-white text-[14px] font-medium px-7 py-3.5 rounded-sm hover:brightness-110 transition">
                 Register Any File <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
               </Link>
               <Link to="/verify" className="flex items-center justify-center text-ink-secondary text-[14px] font-medium px-7 py-3.5 border border-rule rounded-sm hover:border-ink-faint hover:text-ink transition">

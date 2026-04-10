@@ -13,7 +13,7 @@ const cfg = {
   registered: { label: 'REGISTERED',   dot: 'bg-verified', bg: 'bg-verified-glow', text: 'text-verified' },
 };
 
-const QR_BASE = 'https://attestr-app.vercel.app';
+const QR_BASE = typeof window !== 'undefined' ? window.location.origin : '';
 
 export default function ResultCard({ status, message, block, similarity, onChain, file, registrant, verificationCount, recentVerifications, attestationNote, custodyTimeline, coSigners, isRevoked, currentCustodian }) {
   const [generating, setGenerating] = useState(false);
@@ -129,7 +129,7 @@ export default function ResultCard({ status, message, block, similarity, onChain
         {onChain?.transactionHash && (
           <div className="mt-5 pt-4 border-t border-rule bg-accent/5 -mx-5 px-5 py-4 space-y-3">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-[10px] font-mono text-kesari tracking-widest uppercase font-bold text-shadow-sm">Bharat Digital Notary Seal</span>
+              <span className="text-[10px] font-mono text-kesari tracking-widest uppercase font-bold text-shadow-sm">Bharat Digital Proof Seal</span>
               <span className="text-[9px] font-mono text-verified bg-verified/10 px-2 py-0.5 rounded-full">SOVEREIGN VERIFIED</span>
             </div>
 
@@ -169,7 +169,7 @@ export default function ResultCard({ status, message, block, similarity, onChain
               )}
               {onChain.timestamp && (
                 <div className="flex justify-between border-b border-rule-light pb-1.5">
-                  <span className="text-ink-faint">Notarized At</span>
+                  <span className="text-ink-faint">Sealed On</span>
                   <span className="text-ink">{new Date(onChain.timestamp * 1000).toLocaleString()}</span>
                 </div>
               )}
@@ -192,7 +192,7 @@ export default function ResultCard({ status, message, block, similarity, onChain
                 <img src={regPhoto} alt="" className="w-6 h-6 rounded-full object-cover" referrerPolicy="no-referrer" />
               ) : null}
               <div>
-                <span className="text-[9px] font-mono text-ink-faint tracking-widest uppercase block mb-0.5">Notary</span>
+                <span className="text-[9px] font-mono text-ink-faint tracking-widest uppercase block mb-0.5">Registrant</span>
                 <p className="text-[12px] text-ink truncate">{regName || 'Anonymous Account'}</p>
               </div>
             </div>
@@ -208,8 +208,8 @@ export default function ResultCard({ status, message, block, similarity, onChain
           <div className="mt-4 bg-danger/10 border border-danger/20 rounded-sm p-3 flex items-center gap-3">
             <Ban className="w-5 h-5 text-danger shrink-0" strokeWidth={1.5} />
             <div>
-              <p className="text-[12px] text-danger font-medium">Attestation Revoked</p>
-              <p className="text-[10px] text-danger/70">The original registrant has revoked their attestation for this file.</p>
+              <p className="text-[12px] text-danger font-medium">Proof Revoked</p>
+              <p className="text-[10px] text-danger/70">The original registrant has revoked their proof for this file.</p>
             </div>
           </div>
         )}
@@ -219,7 +219,7 @@ export default function ResultCard({ status, message, block, similarity, onChain
           <div className="mt-4 pt-3 border-t border-rule">
             <div className="flex items-center gap-2 mb-2">
               <FileText className="w-3.5 h-3.5 text-ink-faint" strokeWidth={1.5} />
-              <span className="text-[10px] font-mono text-ink-faint tracking-widest uppercase">Attestation Note</span>
+              <span className="text-[10px] font-mono text-ink-faint tracking-widest uppercase">Proof Note</span>
             </div>
             <p className="text-[12px] text-ink-secondary leading-relaxed bg-surface-raised border border-rule-light rounded-sm p-3 italic">
               "{attestationNote}"
@@ -232,7 +232,7 @@ export default function ResultCard({ status, message, block, similarity, onChain
           <div className="mt-4 pt-3 border-t border-rule">
             <div className="flex items-center gap-2 mb-2">
               <Users className="w-3.5 h-3.5 text-accent" strokeWidth={1.5} />
-              <span className="text-[10px] font-mono text-ink-faint tracking-widest uppercase">Co-Attestations ({coSigners.length})</span>
+              <span className="text-[10px] font-mono text-ink-faint tracking-widest uppercase">Co-Signatures ({coSigners.length})</span>
             </div>
             <div className="space-y-1.5">
               {coSigners.map((cs, i) => (
@@ -279,7 +279,7 @@ export default function ResultCard({ status, message, block, similarity, onChain
                   <div className="text-[11px]">
                     <span className="text-ink font-medium">
                       {evt.type === 'registered' && `Registered by ${evt.by}`}
-                      {evt.type === 'co-attested' && `Co-attested by ${evt.by}`}
+                      {evt.type === 'co-attested' && `Co-signed by ${evt.by}`}
                       {evt.type === 'custody-transferred' && `Custody → ${evt.toName}`}
                       {evt.type === 'revoked' && `Revoked by ${evt.by}`}
                     </span>
@@ -298,7 +298,7 @@ export default function ResultCard({ status, message, block, similarity, onChain
           <div className="mt-3 pt-3 border-t border-rule-light">
             <div className="flex items-center gap-2 mb-1.5">
               <Smartphone className="w-3 h-3 text-ink-faint" strokeWidth={1.5} />
-              <span className="text-[9px] font-mono text-ink-faint tracking-widest uppercase">Device Attestation</span>
+              <span className="text-[9px] font-mono text-ink-faint tracking-widest uppercase">Device Info</span>
             </div>
             <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] font-mono text-ink-tertiary">
               <span>{block.data.deviceInfo.platform}</span>

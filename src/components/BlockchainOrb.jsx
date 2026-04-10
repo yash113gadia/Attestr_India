@@ -1,6 +1,7 @@
 import { useRef, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import useIsLight from '../hooks/useIsLight';
 
 function OrbCore() {
   const wireRef = useRef();
@@ -79,8 +80,9 @@ function Pulse() {
 }
 
 export default function BlockchainOrb({ className = '', size = 200 }) {
+  const light = useIsLight();
   return (
-    <div className={className} style={{ width: size, height: size }}>
+    <div className={className} style={{ width: size, height: size, opacity: light ? 0.6 : 1 }}>
       <Canvas camera={{ position: [0, 0, 3], fov: 35 }} dpr={[1, 1.5]} gl={{ antialias: true, alpha: true }} style={{ background: 'transparent' }}>
         <ambientLight intensity={0.5} />
         <pointLight position={[2, 2, 2]} intensity={0.4} color="#3B82F6" />

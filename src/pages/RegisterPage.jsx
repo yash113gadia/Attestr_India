@@ -225,7 +225,7 @@ export default function RegisterPage() {
               <p className="text-[14px] text-ink mb-1">Sign in to register content</p>
               <p className="text-[12px] text-ink-tertiary mb-6 max-w-xs mx-auto">Authentication links registrations to your identity for provenance tracking.</p>
               <button onClick={signInWithGoogle}
-                className="bg-white text-void text-[13px] font-medium px-6 py-2.5 rounded-sm hover:bg-ink transition">
+                className="bg-accent text-white text-[13px] font-medium px-6 py-2.5 rounded-sm hover:brightness-110 transition">
                 Continue with Google
               </button>
             </motion.div>
@@ -277,7 +277,7 @@ export default function RegisterPage() {
                       />
                     </div>
                     <button onClick={handleUrlRegister} disabled={!urlInput || urlSubmitting}
-                      className="flex items-center gap-2 bg-white text-void text-[12px] font-medium px-4 py-2 rounded-sm hover:bg-ink transition disabled:opacity-40">
+                      className="flex items-center gap-2 bg-accent text-white text-[12px] font-medium px-4 py-2 rounded-sm hover:brightness-110 transition disabled:opacity-40">
                       {urlSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Blocks className="w-4 h-4" strokeWidth={1.5} />}
                       Register
                     </button>
@@ -382,7 +382,7 @@ export default function RegisterPage() {
                   <div className="flex items-center gap-3">
                     {!batchRunning && batchFiles.some(b => b.status === 'pending') && (
                       <button onClick={runBatch}
-                        className="flex items-center gap-2 bg-white text-void text-[12px] font-medium px-5 py-2.5 rounded-sm hover:bg-ink transition">
+                        className="flex items-center gap-2 bg-accent text-white text-[12px] font-medium px-5 py-2.5 rounded-sm hover:brightness-110 transition">
                         <Blocks className="w-4 h-4" strokeWidth={1.5} /> Register {batchFiles.filter(b => b.status === 'pending').length} Files
                       </button>
                     )}
@@ -420,7 +420,7 @@ export default function RegisterPage() {
               {/* File card */}
               <motion.div variants={fade} custom={0} className="border border-rule rounded-sm bg-surface overflow-hidden">
                 <div className="px-4 md:px-5 py-3 border-b border-rule-light flex items-center justify-between">
-                  <span className="text-[10px] font-mono text-ink-tertiary tracking-widest uppercase">File Identity (Notary)</span>
+                  <span className="text-[10px] font-mono text-ink-tertiary tracking-widest uppercase">File Identity</span>
                   <span className="text-[10px] font-mono text-ink-faint hidden sm:inline">{new Date().toLocaleString()}</span>
                 </div>
                 <div className="p-4 md:p-5 flex gap-4 md:gap-5">
@@ -476,7 +476,7 @@ export default function RegisterPage() {
                           <ShieldCheck className="absolute w-3 h-3 text-white opacity-0 peer-checked:opacity-100 pointer-events-none transition-opacity" />
                         </div>
                         <div className="flex-1">
-                          <p className="text-[12px] text-ink font-medium leading-none mb-1 group-hover:text-accent transition-colors">Attest to File Integrity</p>
+                          <p className="text-[12px] text-ink font-medium leading-none mb-1 group-hover:text-accent transition-colors">Confirm File Integrity</p>
                           <p className="text-[11px] text-ink-tertiary leading-relaxed">
                             I certify that this file is authentic and unaltered. I understand this cryptographic 
                             fingerprint will be <span className="text-accent font-mono">permanently</span> linked 
@@ -488,7 +488,7 @@ export default function RegisterPage() {
 
                     {/* Attestation Note */}
                     <div className="mb-4">
-                      <label className="block text-[10px] font-mono text-ink-faint tracking-widest uppercase mb-1.5">Attestation Note (optional)</label>
+                      <label className="block text-[10px] font-mono text-ink-faint tracking-widest uppercase mb-1.5">Proof Note (optional)</label>
                       <textarea
                         value={attestationNote}
                         onChange={(e) => setAttestationNote(e.target.value)}
@@ -502,7 +502,7 @@ export default function RegisterPage() {
 
                     {/* Device Attestation Info */}
                     <div className="mb-4 bg-void/50 border border-rule-light rounded-sm p-3">
-                      <p className="text-[9px] font-mono text-ink-faint tracking-widest uppercase mb-1.5">Device Attestation</p>
+                      <p className="text-[9px] font-mono text-ink-faint tracking-widest uppercase mb-1.5">Device Info</p>
                       <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] font-mono text-ink-tertiary">
                         <span>{deviceInfo.platform}</span>
                         <span>{deviceInfo.timezone}</span>
@@ -513,7 +513,7 @@ export default function RegisterPage() {
 
                     <div className="flex items-center gap-3">
                       <button onClick={handleRegister} disabled={registering || !attested}
-                        className="flex-1 py-3 bg-white text-void text-[13px] font-medium rounded-sm hover:bg-ink transition disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                        className="flex-1 py-3 bg-accent text-white text-[13px] font-medium rounded-sm hover:brightness-110 transition disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed flex items-center justify-center gap-2">
                         {registering ? (
                           <motion.span animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.2, repeat: Infinity }}>
                             Anchoring to Ledger...
@@ -521,7 +521,7 @@ export default function RegisterPage() {
                         ) : (
                           <>
                             <Blocks className="w-3.5 h-3.5" />
-                            Notarize on Ledger
+                            Seal on Blockchain
                           </>
                         )}
                       </button>
@@ -572,7 +572,7 @@ export default function RegisterPage() {
                       <motion.div variants={fade} custom={3} className="border border-rule rounded-sm bg-surface p-5">
                         <div className="flex items-center gap-3 mb-4">
                           <meta.icon className={`w-5 h-5 ${meta.color}`} strokeWidth={1.5} />
-                          <span className="text-[12px] font-medium text-ink">{meta.label} Notary Analysis</span>
+                          <span className="text-[12px] font-medium text-ink">{meta.label} Integrity Analysis</span>
                         </div>
                         <div className="space-y-4">
                           {features.map((feat, i) => (

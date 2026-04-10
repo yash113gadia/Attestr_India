@@ -46,7 +46,7 @@ export default function ActivityPage() {
       {data && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} className="mb-6 md:mb-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-rule rounded-sm overflow-hidden border border-rule">
-            <Stat icon={TrendingUp} label="TOTAL NOTARIZATIONS" value={data.totalRegistrations} delay={0.1} />
+            <Stat icon={TrendingUp} label="TOTAL RECORDS" value={data.totalRegistrations} delay={0.1} />
             <Stat icon={Blocks} label="BLOCKCHAIN BLOCKS" value={data.chainLength} delay={0.2} />
             <Stat 
               icon={ShieldCheck} 
@@ -65,7 +65,7 @@ export default function ActivityPage() {
 
           {data.onChain && (
             <div className="mt-3 border border-accent/15 bg-accent-glow rounded-sm px-4 md:px-5 py-3 flex items-center gap-4 md:gap-6 text-[11px] font-mono flex-wrap">
-              <span><span className="text-ink-faint">notary contract </span><span className="text-ink-secondary hidden sm:inline">{data.onChain.contractAddress?.substring(0, 22)}...</span><span className="text-ink-secondary sm:hidden">{data.onChain.contractAddress?.substring(0, 10)}...</span></span>
+              <span><span className="text-ink-faint">contract </span><span className="text-ink-secondary hidden sm:inline">{data.onChain.contractAddress?.substring(0, 22)}...</span><span className="text-ink-secondary sm:hidden">{data.onChain.contractAddress?.substring(0, 10)}...</span></span>
               <span><span className="text-ink-faint">anchored records </span><span className="text-accent font-medium">{data.onChain.totalRegistered}</span></span>
               <span className="flex items-center gap-1.5 sm:ml-auto">
                 <span className="w-1.5 h-1.5 rounded-full bg-verified animate-pulse" />
@@ -84,7 +84,7 @@ export default function ActivityPage() {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="border border-rule rounded-sm bg-surface p-8 md:p-12 text-center">
           <Activity className="w-8 h-8 text-ink-faint mx-auto mb-3" strokeWidth={1.5} />
           <p className="text-[13px] text-ink-secondary">No activity yet</p>
-          <p className="text-[12px] text-ink-faint mt-1">Activity will appear here as users notarize media.</p>
+          <p className="text-[12px] text-ink-faint mt-1">Activity will appear here as users register media.</p>
         </motion.div>
       )}
 
@@ -93,7 +93,7 @@ export default function ActivityPage() {
         <div>
           <div className="flex flex-wrap items-center gap-2 mb-4">
             <Activity className="w-4 h-4 text-ink-faint" strokeWidth={1.5} />
-            <span className="text-[11px] font-mono text-ink-tertiary tracking-widest">RECENT NOTARIZATIONS</span>
+            <span className="text-[11px] font-mono text-ink-tertiary tracking-widest">RECENT RECORDS</span>
             <div className="hidden sm:flex items-center gap-1.5 ml-auto">
               <Lock className="w-3 h-3 text-ink-faint" strokeWidth={1.5} />
               <span className="text-[10px] font-mono text-ink-faint">identity protected</span>
@@ -107,7 +107,7 @@ export default function ActivityPage() {
                 <span>FILE</span>
                 <span>FORMAT</span>
                 <span>SIZE</span>
-                <span>NOTARY</span>
+                <span>REGISTRANT</span>
                 <span className="text-right">TIME</span>
               </div>
 
@@ -141,7 +141,7 @@ export default function ActivityPage() {
 
           <div className="mt-4 flex items-center gap-2 text-[11px] text-ink-faint">
             <Users className="w-3.5 h-3.5 shrink-0" strokeWidth={1.5} />
-            <span>All records are anchored to the blockchain. Identities are partially redacted for privacy. Only the original notary can view full details in My Ledger.</span>
+            <span>All records are anchored to the blockchain. Identities are partially redacted for privacy. Only the original registrant can view full details in My Ledger.</span>
           </div>
         </div>
       )}

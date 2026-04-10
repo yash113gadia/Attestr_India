@@ -27,7 +27,7 @@ export default function NotaryPreview({ file, previewUrl }) {
 
   if (isAudio && previewUrl) {
     return (
-      <div className="w-full h-full flex flex-col items-center justify-center bg-void-dark p-4 gap-3">
+      <div className="w-full h-full flex flex-col items-center justify-center bg-surface p-4 gap-3">
         <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center border border-accent/20">
           <Music className="w-6 h-6 text-accent" strokeWidth={1.5} />
         </div>
@@ -38,7 +38,7 @@ export default function NotaryPreview({ file, previewUrl }) {
 
   if (is3D && previewUrl && file?.name?.endsWith('.glb')) {
     return (
-      <div className="w-full h-full bg-void-dark relative">
+      <div className="w-full h-full bg-surface relative">
         <Canvas dpr={[1, 2]} camera={{ fov: 45 }} className="w-full h-full">
           <Suspense fallback={null}>
             <Stage environment="city" intensity={0.5} contactShadow={false}>
@@ -59,7 +59,7 @@ export default function NotaryPreview({ file, previewUrl }) {
   const Icon = isPDF ? FileText : is3D ? Box : isCode ? FileDigit : FileDigit;
   
   return (
-    <div className="w-full h-full flex flex-col items-center justify-center bg-void-dark gap-2">
+    <div className="w-full h-full flex flex-col items-center justify-center bg-surface gap-2">
       <Icon className="w-8 h-8 md:w-12 md:h-12 text-accent/40" strokeWidth={1} />
       <span className="text-[9px] font-mono text-ink-faint uppercase tracking-widest">{file?.name?.split('.').pop()} FILE</span>
     </div>

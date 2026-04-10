@@ -6,14 +6,16 @@ import {
   ExternalLink, ArrowRight, Monitor, Chrome, Terminal, Eye,
   Globe, TrendingUp, Activity, Hash, AlertTriangle, Bot,
   FolderOpen, HardDrive, RotateCcw, Image, Check, X, CircleDot,
-  ArrowUpFromLine, Link2, Loader2, Upload
+  ArrowUpFromLine, Link2, Loader2, Upload, Users, ArrowRightLeft, Ban, QrCode, Clock, Download
 } from 'lucide-react';
 import Logo from '../components/Logo';
 import Stat from '../components/Stat';
 import ResultCard from '../components/ResultCard';
 import ErrorBoundary from '../components/ErrorBoundary';
 import { hashFile } from '../lib/hash';
-import { registerMedia, verifyMedia, registerByUrl } from '../lib/api';
+import { registerMedia, verifyMedia, registerByUrl, coAttest, transferCustody, revokeAttestation, getCustodyTimeline } from '../lib/api';
+import { useAuth } from '../components/AuthProvider';
+import { signInWithGoogle } from '../lib/firebase';
 
 const GridBackground = lazy(() => import('../components/GridBackground'));
 const BlockchainOrb = lazy(() => import('../components/BlockchainOrb'));
@@ -137,7 +139,7 @@ function LiveWebDemo() {
         ))}
       </div>
 
-      <div className="bg-[#0A0B0F] p-6">
+      <div className="bg-surface-raised p-6">
 
         {/* ── URL Register mode ── */}
         {mode === 'url' && !result && (
@@ -155,7 +157,7 @@ function LiveWebDemo() {
                 />
               </div>
               <button onClick={handleUrlRegister} disabled={!urlInput || submitting}
-                className="flex items-center gap-2 bg-white text-void text-[12px] font-medium px-4 py-2.5 rounded-sm hover:bg-ink transition disabled:opacity-40">
+                className="flex items-center gap-2 bg-accent text-white text-[12px] font-medium px-4 py-2.5 rounded-sm hover:brightness-110 transition disabled:opacity-40">
                 {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Blocks className="w-4 h-4" strokeWidth={1.5} />}
                 Register
               </button>
@@ -244,7 +246,7 @@ function LiveWebDemo() {
                   <div className="flex"><span className="text-ink-faint w-14">dHash</span><span className="text-ink truncate">{hashes.dHash || 'n/a'}</span></div>
                 </div>
                 <button onClick={handleRegister}
-                  className="w-full flex items-center justify-center gap-2 bg-white text-void text-[13px] font-medium py-3 rounded-sm hover:bg-ink transition">
+                  className="w-full flex items-center justify-center gap-2 bg-accent text-white text-[13px] font-medium py-3 rounded-sm hover:brightness-110 transition">
                   <Blocks className="w-4 h-4" strokeWidth={1.5} /> Register on Ethereum
                 </button>
               </div>
@@ -371,7 +373,7 @@ function LiveAgentDemo() {
 
       {/* Terminal body */}
       <div ref={scrollRef}
-        className="bg-[#0A0B0F] p-4 h-[380px] overflow-y-auto font-mono text-[11px] leading-[1.7]">
+        className="bg-surface-raised p-4 h-[380px] overflow-y-auto font-mono text-[11px] leading-[1.7]">
         {lines.map((line) => (
           <motion.div key={line.id} initial={{ opacity: 0, x: -4 }} animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.15 }} className={line.cls || 'text-ink-faint'}>
@@ -463,7 +465,7 @@ function LiveExtensionDemo() {
           </div>
         </div>
 
-        <div className="bg-[#0A0B0F] p-5">
+        <div className="bg-surface-raised p-5">
           {/* URL input — simulating what the extension does */}
           <div className="flex gap-2 mb-4">
             <div className="flex-1 flex items-center gap-2 bg-surface border border-rule rounded-sm px-3 py-2">
@@ -548,7 +550,7 @@ function LiveExtensionDemo() {
             </div>
             <span className="text-[9px] font-mono text-accent bg-accent/10 px-2 py-0.5 rounded-full">MEDIA VERIFIER</span>
           </div>
-          <div className="bg-[#0A0B0F] px-4 py-3">
+          <div className="bg-surface-raised px-4 py-3">
             <p className="text-[10px] font-mono text-ink-faint tracking-wider uppercase mb-2">Recent Verifications</p>
             <div className="space-y-1.5 max-h-[200px] overflow-y-auto">
               {history.map((item, i) => (
@@ -570,6 +572,274 @@ function LiveExtensionDemo() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PRODUCT 4: CHAIN OF CUSTODY — Live co-attest, transfer, revoke
+   ═══════════════════════════════════════════════════════════ */
+function LiveCustodyDemo() {
+  const user = useAuth();
+  const [sha256Input, setSha256Input] = useState('');
+  const [custody, setCustody] = useState(null);
+  const [loading, setLoading] = useState(null);
+  const [msg, setMsg] = useState(null);
+  const [coNote, setCoNote] = useState('');
+  const [transferEmail, setTransferEmail] = useState('');
+  const [revokeReason, setRevokeReason] = useState('');
+
+  async function loadCustody(hash) {
+    const h = hash || sha256Input;
+    if (!h) return;
+    setLoading('load'); setMsg(null);
+    try {
+      const c = await getCustodyTimeline(h);
+      setCustody(c);
+      setSha256Input(h);
+    } catch (e) { setMsg({ type: 'error', text: e.message }); }
+    setLoading(null);
+  }
+
+  async function handleCoAttest() {
+    setLoading('co-attest'); setMsg(null);
+    try {
+      const r = await coAttest({ sha256: sha256Input, note: coNote || undefined });
+      setMsg({ type: 'success', text: r.message });
+      setCoNote(''); loadCustody();
+    } catch (e) { setMsg({ type: 'error', text: e.message }); }
+    setLoading(null);
+  }
+
+  async function handleTransfer() {
+    if (!transferEmail) return;
+    setLoading('transfer'); setMsg(null);
+    try {
+      const r = await transferCustody({ sha256: sha256Input, toEmail: transferEmail });
+      setMsg({ type: 'success', text: r.message });
+      setTransferEmail(''); loadCustody();
+    } catch (e) { setMsg({ type: 'error', text: e.message }); }
+    setLoading(null);
+  }
+
+  async function handleRevoke() {
+    setLoading('revoke'); setMsg(null);
+    try {
+      const r = await revokeAttestation({ sha256: sha256Input, reason: revokeReason || 'Demo revocation' });
+      setMsg({ type: 'success', text: r.message });
+      loadCustody();
+    } catch (e) { setMsg({ type: 'error', text: e.message }); }
+    setLoading(null);
+  }
+
+  return (
+    <div className="border border-rule rounded-sm overflow-hidden">
+      <div className="bg-surface-raised border-b border-rule px-5 py-3">
+        <span className="text-[10px] font-mono text-ink-faint tracking-widest">CHAIN OF CUSTODY — LIVE DEMO</span>
+      </div>
+      <div className="bg-surface-raised p-6 space-y-4">
+        {/* Step 1: Lookup */}
+        <div>
+          <p className="text-[10px] font-mono text-ink-faint tracking-widest uppercase mb-2">1. Lookup a registered file</p>
+          <div className="flex gap-2">
+            <div className="flex-1 flex items-center gap-2 bg-surface border border-rule rounded-sm px-3 py-2.5">
+              <Hash className="w-4 h-4 text-ink-faint shrink-0" strokeWidth={1.5} />
+              <input type="text" value={sha256Input} onChange={e => setSha256Input(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && loadCustody()}
+                placeholder="Paste SHA-256 hash of a registered file..."
+                className="flex-1 bg-transparent text-[12px] text-ink font-mono outline-none placeholder:text-ink-faint" />
+            </div>
+            <button onClick={() => loadCustody()} disabled={!sha256Input || loading === 'load'}
+              className="flex items-center gap-2 bg-accent text-white text-[12px] font-medium px-4 py-2.5 rounded-sm hover:brightness-110 transition disabled:opacity-40">
+              {loading === 'load' ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" strokeWidth={1.5} />}
+              Lookup
+            </button>
+          </div>
+        </div>
+
+        {/* Custody Timeline */}
+        {custody && (
+          <div className="border border-rule rounded-sm bg-surface p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Clock className="w-3.5 h-3.5 text-ink-faint" strokeWidth={1.5} />
+                <span className="text-[10px] font-mono text-ink-faint tracking-widest uppercase">Custody Timeline</span>
+              </div>
+              <span className={`text-[9px] px-2 py-0.5 rounded-full font-mono ${custody.isRevoked ? 'bg-danger/10 text-danger' : 'bg-verified/10 text-verified'}`}>
+                {custody.isRevoked ? 'REVOKED' : 'ACTIVE'}
+              </span>
+            </div>
+            <div className="text-[11px] text-ink-secondary space-y-1">
+              <p><span className="text-ink-faint">File:</span> {custody.filename || 'Unknown'}</p>
+              <p><span className="text-ink-faint">Registrant:</span> {custody.registrant?.name}</p>
+              <p><span className="text-ink-faint">Custodian:</span> {custody.currentCustodian?.name}</p>
+              {custody.coSigners?.length > 0 && (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-ink-faint">Co-Signers:</span>
+                  {custody.coSigners.map((cs, i) => (
+                    <span key={i} className="bg-accent/10 text-accent text-[10px] px-2 py-0.5 rounded-full">{cs.name}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+            {custody.events?.length > 0 && (
+              <div className="relative pl-4 border-l border-rule-light space-y-2 mt-2">
+                {custody.events.slice(-6).reverse().map((evt, i) => (
+                  <div key={i} className="relative">
+                    <span className={`absolute -left-[21px] w-2.5 h-2.5 rounded-full border-2 border-void ${
+                      evt.type === 'registered' ? 'bg-verified' :
+                      evt.type === 'co-attested' ? 'bg-accent' :
+                      evt.type === 'custody-transferred' ? 'bg-caution' :
+                      evt.type === 'revoked' ? 'bg-danger' : 'bg-ink-faint'
+                    }`} />
+                    <div className="text-[10px]">
+                      <span className="text-ink font-medium">
+                        {evt.type === 'registered' && `Registered by ${evt.by}`}
+                        {evt.type === 'co-attested' && `Co-attested by ${evt.by}`}
+                        {evt.type === 'custody-transferred' && `Custody → ${evt.toName}`}
+                        {evt.type === 'revoked' && `Revoked by ${evt.by}`}
+                      </span>
+                      <p className="text-[9px] text-ink-faint font-mono">{new Date(evt.timestamp).toLocaleString()}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Status message */}
+        {msg && (
+          <div className={`flex items-center gap-2 px-3 py-2 rounded-sm text-[11px] ${msg.type === 'success' ? 'bg-verified/10 border border-verified/20 text-verified' : 'bg-danger/10 border border-danger/20 text-danger'}`}>
+            {msg.type === 'success' ? <Check className="w-3.5 h-3.5" /> : <AlertTriangle className="w-3.5 h-3.5" />}
+            {msg.text}
+          </div>
+        )}
+
+        {/* Auth gate */}
+        {!user && custody && (
+          <div className="text-center py-3">
+            <p className="text-[11px] text-ink-faint mb-2">Sign in to perform custody actions</p>
+            <button onClick={signInWithGoogle} className="bg-accent text-white text-[12px] font-medium px-6 py-2 rounded-sm hover:bg-accent/90 transition">
+              Sign in with Google
+            </button>
+          </div>
+        )}
+
+        {/* Actions — only when authenticated and custody loaded */}
+        {user && custody && !custody.isRevoked && (
+          <div className="space-y-3">
+            <p className="text-[10px] font-mono text-ink-faint tracking-widest uppercase">2. Custody Actions</p>
+
+            {/* Co-Attest */}
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="flex-1 flex items-center gap-2 bg-surface border border-rule rounded-sm px-3 py-2">
+                <Users className="w-3.5 h-3.5 text-accent shrink-0" strokeWidth={1.5} />
+                <input type="text" value={coNote} onChange={e => setCoNote(e.target.value)}
+                  placeholder="Co-attest note (optional)…" className="flex-1 bg-transparent text-[11px] text-ink font-mono outline-none placeholder:text-ink-faint" />
+              </div>
+              <button onClick={handleCoAttest} disabled={loading === 'co-attest'}
+                className="flex items-center gap-1.5 px-3 py-2 bg-accent/10 border border-accent/20 text-accent text-[11px] font-medium rounded-sm hover:bg-accent/20 transition disabled:opacity-40">
+                {loading === 'co-attest' ? <Loader2 className="w-3 h-3 animate-spin" /> : <Users className="w-3 h-3" />} Co-Attest
+              </button>
+            </div>
+
+            {/* Transfer */}
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="flex-1 flex items-center gap-2 bg-surface border border-rule rounded-sm px-3 py-2">
+                <ArrowRightLeft className="w-3.5 h-3.5 text-caution shrink-0" strokeWidth={1.5} />
+                <input type="email" value={transferEmail} onChange={e => setTransferEmail(e.target.value)}
+                  placeholder="Transfer to email…" className="flex-1 bg-transparent text-[11px] text-ink font-mono outline-none placeholder:text-ink-faint" />
+              </div>
+              <button onClick={handleTransfer} disabled={!transferEmail || loading === 'transfer'}
+                className="flex items-center gap-1.5 px-3 py-2 bg-caution/10 border border-caution/20 text-caution text-[11px] font-medium rounded-sm hover:bg-caution/20 transition disabled:opacity-40">
+                {loading === 'transfer' ? <Loader2 className="w-3 h-3 animate-spin" /> : <ArrowRightLeft className="w-3 h-3" />} Transfer
+              </button>
+            </div>
+
+            {/* Revoke */}
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="flex-1 flex items-center gap-2 bg-surface border border-rule rounded-sm px-3 py-2">
+                <Ban className="w-3.5 h-3.5 text-danger shrink-0" strokeWidth={1.5} />
+                <input type="text" value={revokeReason} onChange={e => setRevokeReason(e.target.value)}
+                  placeholder="Revocation reason…" className="flex-1 bg-transparent text-[11px] text-ink font-mono outline-none placeholder:text-ink-faint" />
+              </div>
+              <button onClick={handleRevoke} disabled={loading === 'revoke'}
+                className="flex items-center gap-1.5 px-3 py-2 bg-danger/10 border border-danger/20 text-danger text-[11px] font-medium rounded-sm hover:bg-danger/20 transition disabled:opacity-40">
+                {loading === 'revoke' ? <Loader2 className="w-3 h-3 animate-spin" /> : <Ban className="w-3 h-3" />} Revoke
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PRODUCT 5: QR VERIFICATION — Scan & Verify
+   ═══════════════════════════════════════════════════════════ */
+function LiveQRDemo() {
+  const [sha256Input, setSha256Input] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
+
+  async function handleVerify() {
+    if (!sha256Input) return;
+    setLoading(true); setError(null); setResult(null);
+    try {
+      const [verifyRes, custody] = await Promise.all([
+        verifyMedia({ sha256: sha256Input }),
+        getCustodyTimeline(sha256Input).catch(() => null),
+      ]);
+      if (custody) {
+        verifyRes.custodyTimeline = custody.events || [];
+        verifyRes.coSigners = custody.coSigners || [];
+        verifyRes.isRevoked = custody.isRevoked || false;
+        verifyRes.currentCustodian = custody.currentCustodian || null;
+      }
+      setResult(verifyRes);
+    } catch (e) { setError(e.message); }
+    setLoading(false);
+  }
+
+  return (
+    <div className="border border-rule rounded-sm overflow-hidden">
+      <div className="bg-surface-raised border-b border-rule px-5 py-3">
+        <span className="text-[10px] font-mono text-ink-faint tracking-widest">QR / HASH VERIFICATION — LIVE DEMO</span>
+      </div>
+      <div className="bg-surface-raised p-6 space-y-4">
+        <p className="text-[11px] text-ink-tertiary leading-relaxed">
+          Every registered file gets a QR code. Scanning it opens <code className="text-accent">/verify?sha256=...</code> and verifies instantly.
+          Try pasting a hash below to simulate what happens when a QR code is scanned.
+        </p>
+        <div className="flex gap-2">
+          <div className="flex-1 flex items-center gap-2 bg-surface border border-rule rounded-sm px-3 py-2.5">
+            <QrCode className="w-4 h-4 text-ink-faint shrink-0" strokeWidth={1.5} />
+            <input type="text" value={sha256Input} onChange={e => setSha256Input(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleVerify()}
+              placeholder="Paste SHA-256 hash..."
+              className="flex-1 bg-transparent text-[12px] text-ink font-mono outline-none placeholder:text-ink-faint" />
+          </div>
+          <button onClick={handleVerify} disabled={!sha256Input || loading}
+            className="flex items-center gap-2 bg-accent text-white text-[12px] font-medium px-4 py-2.5 rounded-sm hover:brightness-110 transition disabled:opacity-40">
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" strokeWidth={1.5} />}
+            Verify
+          </button>
+        </div>
+
+        {error && <p className="text-[11px] text-danger">{error}</p>}
+
+        {result && (
+          <div className="space-y-3">
+            <ResultCard {...result} />
+            <p className="text-[10px] text-ink-faint text-center font-mono">
+              This is exactly what happens when you scan a QR code from a sealed file.
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -629,7 +899,7 @@ export default function DemoPage() {
           <p className="text-[13px] text-ink-faint mt-3 font-mono flex items-center justify-center gap-2">
             <span className="flex items-center gap-1">
               <span className="w-2 h-1.5 bg-[#FF9933]" />
-              <span className="w-2 h-1.5 bg-white" />
+              <span className="w-2 h-1.5 bg-ink-faint" />
               <span className="w-2 h-1.5 bg-[#128807]" />
             </span>
             Innovate Bharat 2026 · Team Ctrl+Alt+Diablo
@@ -647,7 +917,7 @@ export default function DemoPage() {
           </div>
           {stats?.onChain && (
             <div className="mt-3 border border-accent/15 bg-accent-glow rounded-sm px-5 py-3 flex items-center gap-6 text-[11px] font-mono flex-wrap">
-              <span><span className="text-ink-faint">notary contract </span><span className="text-ink-secondary">{CONTRACT.substring(0, 22)}...</span></span>
+              <span><span className="text-ink-faint">contract </span><span className="text-ink-secondary">{CONTRACT.substring(0, 22)}...</span></span>
               <span className="flex items-center gap-1.5 ml-auto">
                 <span className="w-1.5 h-1.5 rounded-full bg-verified animate-pulse" />
                 <span className="text-verified">live on Ethereum Sepolia</span>
@@ -685,8 +955,8 @@ export default function DemoPage() {
             <h2 className="font-serif text-[28px] tracking-tight mb-6">Attestr: The Immutable Ledger.</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {[
-                { icon: Fingerprint, title: 'Fuzzy Notarization', desc: 'SHA-256 for byte-level proof + perceptual dHash that recognizes the same content across compression and resizing.' },
-                { icon: Blocks, title: 'Ethereum Notary Seal', desc: 'Hashes permanently anchored on Sepolia. Publicly verifiable. Immutable proof of existence at block time.' },
+                { icon: Fingerprint, title: 'Fuzzy Matching', desc: 'SHA-256 for byte-level proof + perceptual dHash that recognizes the same content across compression and resizing.' },
+                { icon: Blocks, title: 'Ethereum Proof Seal', desc: 'Hashes permanently anchored on Sepolia. Publicly verifiable. Immutable proof of existence at block time.' },
                 { icon: Search, title: 'Integrity Inspection', desc: 'Deep metadata extraction (EXIF) and Error Level Analysis (ELA) for images; byte-level integrity checks for all file types.' },
                 { icon: Lock, title: 'Zero-Knowledge Privacy', desc: 'Files never leave your device. Only cryptographic fingerprints cross the network. Complete privacy by design.' },
               ].map((f) => (
@@ -737,18 +1007,18 @@ export default function DemoPage() {
               </div>
             </div>
             <div className="border-t border-rule pt-4 text-ink-tertiary text-[11px]">
-              Files never leave the browser. Only cryptographic notarizations are recorded on-chain.
+              Files never leave the browser. Only cryptographic proofs are recorded on-chain.
             </div>
           </div>
         </motion.section>
 
         {/* ═══════════════════════════════════════════════════
-           THREE LIVE PRODUCTS
+           FIVE LIVE PRODUCTS
            ═══════════════════════════════════════════════════ */}
 
         <motion.div {...sectionFade} className="mb-6">
           <div className="text-center mb-10">
-            <p className="text-[11px] font-mono text-accent tracking-widest uppercase mb-3">3 Products, 1 API, 1 Blockchain</p>
+            <p className="text-[11px] font-mono text-accent tracking-widest uppercase mb-3">5 Products, 1 API, 1 Blockchain</p>
             <h2 className="font-serif text-[36px] tracking-tight">Try them all. Live.</h2>
             <p className="text-[14px] text-ink-tertiary mt-2">Everything below hits the real Ethereum Sepolia smart contract.</p>
           </div>
@@ -762,7 +1032,7 @@ export default function DemoPage() {
             </div>
             <div>
               <p className="text-[11px] font-mono text-accent tracking-widest uppercase">Product 1</p>
-              <h3 className="text-[18px] font-serif text-ink tracking-tight">Web Notary</h3>
+              <h3 className="text-[18px] font-serif text-ink tracking-tight">Web Platform</h3>
             </div>
             <Link to="/register" className="ml-auto text-[11px] text-ink-tertiary hover:text-accent transition flex items-center gap-1">
               Full version <ArrowRight className="w-3 h-3" />
@@ -796,7 +1066,7 @@ export default function DemoPage() {
             </div>
             <div>
               <p className="text-[11px] font-mono text-[#A855F7] tracking-widest uppercase">Product 2</p>
-              <h3 className="text-[18px] font-serif text-ink tracking-tight">Auto-Notary Agent</h3>
+              <h3 className="text-[18px] font-serif text-ink tracking-tight">Auto-Seal Agent</h3>
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-[1fr_280px] gap-6">
@@ -813,7 +1083,7 @@ export default function DemoPage() {
               </div>
               <div className="border border-rule rounded-sm bg-surface p-4 text-[12px]">
                 <p className="text-ink-faint font-mono text-[11px] mb-1">Use cases</p>
-                <p className="text-ink-tertiary">Newsroom ingestion, legal evidence logging, automated photo archiving, sync folder notarization</p>
+                <p className="text-ink-tertiary">Newsroom ingestion, legal evidence logging, automated photo archiving, sync folder sealing</p>
               </div>
               <a href="/downloads/attestr-agent.js" download="attestr-agent.js"
                 className="flex items-center justify-center gap-2 w-full bg-[#A855F7]/10 border border-[#A855F7]/20 text-[#A855F7] text-[12px] font-medium py-2.5 rounded-sm hover:bg-[#A855F7]/20 transition">
@@ -843,17 +1113,83 @@ export default function DemoPage() {
                   <li>Right-click web media</li>
                   <li>Select <span className="text-verified font-medium">"Verify with Attestr"</span></li>
                   <li>Instant blockchain lookup</li>
-                  <li>Badge: <span className="text-verified">Notarized</span> or <span className="text-danger">Unverified</span></li>
+                  <li>Badge: <span className="text-verified">Sealed</span> or <span className="text-danger">Unverified</span></li>
                 </ol>
               </div>
               <div className="border border-rule rounded-sm bg-surface p-4 text-[12px]">
                 <p className="text-ink-faint font-mono text-[11px] mb-1">Integrity First</p>
-                <p className="text-ink-tertiary">The extension proves if the image you see on a website is the exact file that was notarized on-chain.</p>
+                <p className="text-ink-tertiary">The extension proves if the image you see on a website is the exact file that was sealed on-chain.</p>
               </div>
               <a href="/downloads/attestr-extension.zip" download="attestr-extension.zip"
                 className="flex items-center justify-center gap-2 w-full bg-verified/10 border border-verified/20 text-verified text-[12px] font-medium py-2.5 rounded-sm hover:bg-verified/20 transition">
                 <ArrowUpFromLine className="w-3.5 h-3.5 rotate-180" strokeWidth={2} /> Download Extension (.zip)
               </a>
+            </div>
+          </div>
+        </motion.section>
+
+        {/* ── PRODUCT 4: CHAIN OF CUSTODY ── */}
+        <motion.section {...sectionFade} className="mb-16">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-7 h-7 rounded-sm bg-caution/15 flex items-center justify-center">
+              <ArrowRightLeft className="w-4 h-4 text-caution" strokeWidth={1.5} />
+            </div>
+            <div>
+              <p className="text-[11px] font-mono text-caution tracking-widest uppercase">Product 4</p>
+              <h3 className="text-[18px] font-serif text-ink tracking-tight">Chain of Custody</h3>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_280px] gap-6">
+            <LiveCustodyDemo />
+            <div className="space-y-3">
+              <div className="border border-rule rounded-sm bg-surface p-4 text-[12px] text-ink-tertiary leading-relaxed">
+                <p className="text-ink font-medium mb-2">What you can do</p>
+                <ul className="space-y-1.5">
+                  <li className="flex items-start gap-2"><Users className="w-3.5 h-3.5 text-accent mt-0.5 shrink-0" strokeWidth={1.5} /><span><span className="text-accent font-medium">Co-Attest</span> — Add your signature as a secondary witness</span></li>
+                  <li className="flex items-start gap-2"><ArrowRightLeft className="w-3.5 h-3.5 text-caution mt-0.5 shrink-0" strokeWidth={1.5} /><span><span className="text-caution font-medium">Transfer</span> — Hand custody to another user by email</span></li>
+                  <li className="flex items-start gap-2"><Ban className="w-3.5 h-3.5 text-danger mt-0.5 shrink-0" strokeWidth={1.5} /><span><span className="text-danger font-medium">Revoke</span> — Permanently revoke your proof</span></li>
+                  <li className="flex items-start gap-2"><Download className="w-3.5 h-3.5 text-ink-faint mt-0.5 shrink-0" strokeWidth={1.5} /><span><span className="text-ink-secondary font-medium">PDF Report</span> — Download full custody chain as legal document</span></li>
+                </ul>
+              </div>
+              <div className="border border-rule rounded-sm bg-surface p-4 text-[12px]">
+                <p className="text-ink-faint font-mono text-[11px] mb-1">How it's recorded</p>
+                <p className="text-ink-tertiary text-[11px] leading-relaxed">Every custody action creates an immutable event in the ledger. The full timeline is attached to the registration block and can be exported as a PDF custody report.</p>
+              </div>
+              <div className="border border-rule rounded-sm bg-surface p-4 text-[12px]">
+                <p className="text-ink-faint font-mono text-[11px] mb-1">Real-world use case</p>
+                <p className="text-ink-tertiary text-[11px] leading-relaxed">A journalist captures a video → registers it → editor co-attests → legal department takes custody → full provenance chain is preserved for court admissibility.</p>
+              </div>
+            </div>
+          </div>
+        </motion.section>
+
+        {/* ── PRODUCT 5: QR VERIFICATION ── */}
+        <motion.section {...sectionFade} className="mb-16">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-7 h-7 rounded-sm bg-accent/15 flex items-center justify-center">
+              <QrCode className="w-4 h-4 text-accent" strokeWidth={1.5} />
+            </div>
+            <div>
+              <p className="text-[11px] font-mono text-accent tracking-widest uppercase">Product 5</p>
+              <h3 className="text-[18px] font-serif text-ink tracking-tight">QR Code Verification</h3>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_280px] gap-6">
+            <LiveQRDemo />
+            <div className="space-y-3">
+              <div className="border border-rule rounded-sm bg-surface p-4 text-[12px] text-ink-tertiary leading-relaxed">
+                <p className="text-ink font-medium mb-2">How QR verification works</p>
+                <ol className="space-y-1.5 list-decimal list-inside">
+                  <li>Register a file → QR code is generated</li>
+                  <li>QR encodes: <code className="text-accent text-[10px]">/verify?sha256=...</code></li>
+                  <li>Scan QR → Instant verification with full custody info</li>
+                  <li>Works from any device, no sign-in needed</li>
+                </ol>
+              </div>
+              <div className="border border-rule rounded-sm bg-surface p-4 text-[12px]">
+                <p className="text-ink-faint font-mono text-[11px] mb-1">Camera Scanner</p>
+                <p className="text-ink-tertiary text-[11px] leading-relaxed">The Verify page has a built-in QR scanner. Point your camera at any Attestr QR code for instant verification — no app installation needed.</p>
+              </div>
             </div>
           </div>
         </motion.section>
@@ -869,6 +1205,8 @@ export default function DemoPage() {
               { surface: 'Web App', desc: 'React 19 SPA — register, verify, explore, activity feed', endpoint: '/api/*', color: 'text-accent' },
               { surface: 'Agent', desc: 'Node.js CLI — watches folders, auto-registers new files', endpoint: '/api/register', color: 'text-[#A855F7]' },
               { surface: 'Extension', desc: 'Chrome Manifest V3 — right-click verify any web media', endpoint: '/api/verify', color: 'text-verified' },
+              { surface: 'Custody', desc: 'Co-attest, transfer ownership, revoke — full chain of custody', endpoint: '/api/co-attest', color: 'text-caution' },
+              { surface: 'QR Verify', desc: 'Scan QR codes for instant verification from any device', endpoint: '/verify?sha256=', color: 'text-accent' },
               { surface: 'External', desc: 'Any HTTP client — cURL, Postman, third-party integrations', endpoint: '/api/*', color: 'text-ink-secondary' },
             ].map((r) => (
               <div key={r.surface} className="grid grid-cols-[80px_1fr_120px] gap-3 items-center">
@@ -890,10 +1228,11 @@ export default function DemoPage() {
             <div className="grid grid-cols-[100px_1fr] md:grid-cols-[140px_1fr] divide-y divide-rule text-[13px]">
               {[
                 ['Frontend', 'React 19, Vite 8, Tailwind CSS 4, Three.js, Framer Motion'],
-                ['Backend', 'Express 5, Vercel Serverless Functions'],
+                ['Backend', 'Express 5, Railway Deployment, Node.js 22'],
                 ['Blockchain', 'Solidity 0.8.24, Hardhat 3, Ethers.js 6, Ethereum Sepolia'],
                 ['Security', 'SHA-256 Hashing, Perceptual dHash, Web Crypto API'],
                 ['Auth', 'Firebase Authentication (Google OAuth)'],
+                ['Custody', 'Co-signature, Custody Transfer, Revocation, PDF Reports'],
                 ['Analysis', 'Error Level Analysis (ELA), EXIF Metadata Forensics'],
                 ['Agent', 'Node.js CLI with fs.watch file watcher'],
                 ['Extension', 'Chrome Manifest V3, Content Scripts'],
@@ -911,7 +1250,7 @@ export default function DemoPage() {
         <motion.div {...sectionFade} className="text-center border-t border-rule pt-12">
           <Logo size={32} className="mx-auto mb-3" />
           <p className="font-serif text-[24px] tracking-tight mb-2">Attestr <span className="text-[16px] text-ink-faint">प्रमाण</span></p>
-          <p className="text-[13px] text-ink-tertiary mb-1">Decentralized File Notary</p>
+          <p className="text-[13px] text-ink-tertiary mb-1">Decentralized File Proof</p>
           <p className="text-[11px] text-ink-faint font-mono">
             Team Ctrl+Alt+Diablo · CSBC114 · Innovate Bharat 2026
           </p>

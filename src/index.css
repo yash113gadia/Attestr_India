@@ -48,3 +48,23 @@ body {
 }
 
 ::selection { background: var(--color-accent); color: white; }
+
+/* ── Light Theme Overrides ── */
+html.light {
+  --color-void: #FFFFFF;
+  --color-surface: #F4F5F7;
+  --color-surface-raised: #E8EAF0;
+  --color-surface-hover: #DCE0E8;
+  --color-rule: #D1D5DE;
+  --color-rule-light: #E2E5ED;
+  --color-ink: #111827;
+  --color-ink-secondary: #4B5563;
+  --color-ink-tertiary: #6B7280;
+  --color-ink-faint: #D1D5DB;
+  --color-accent-glow: rgba(99, 102, 241, 0.08);
+  --color-kesari-glow: rgba(255, 153, 51, 0.08);
+  --color-emerald-glow: rgba(18, 136, 7, 0.08);
+  --color-verified-glow: rgba(18, 136, 7, 0.08);
+  --color-danger-glow: rgba(239, 68, 68, 0.08);
+  --color-caution-glow: rgba(245, 158, 11, 0.08);
+}

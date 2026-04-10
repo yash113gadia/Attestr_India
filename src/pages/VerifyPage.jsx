@@ -1,8 +1,9 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowLeft, ShieldCheck, Lock, Fingerprint, Eye, Search, Blocks, AlertTriangle, UserX, Bot,
-  FileText, Music, FileDigit, FileBadge, Shield, Box, Code, Table, Camera
+  FileText, Music, FileDigit, FileBadge, Shield, Box, Code, Table, Camera, QrCode, Loader2
 } from 'lucide-react';
 import ELAViewer from '../components/ELAViewer';
 import ExifPanel from '../components/ExifPanel';
@@ -14,12 +15,15 @@ import HashProgress from '../components/HashProgress';
 import ResultCard from '../components/ResultCard';
 import CompareView from '../components/CompareView';
 import { hashFile } from '../lib/hash';
-import { verifyMedia } from '../lib/api';
+import { verifyMedia, getCustodyTimeline } from '../lib/api';
 import { getFileCategory, getFileMeta, getIntegrityFeatures } from '../lib/fileTypes';
+import QRScanner from '../components/QRScanner';
+import CustodyActions from '../components/CustodyActions';
 
 const fade = { hidden: { opacity: 0, y: 10 }, show: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.06, duration: 0.35 } }) };
 
 export default function VerifyPage() {
+  const [searchParams] = useSearchParams();
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const previewRef = useRef(null);
@@ -29,6 +33,55 @@ export default function VerifyPage() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [exifData, setExifData] = useState(null);
+  const [qrVerifying, setQrVerifying] = useState(false);
+  const [qrResult, setQrResult] = useState(null);
+  const [showScanner, setShowScanner] = useState(false);
+
+  function handleQrScan(rawValue) {
+    setShowScanner(false);
+    try {
+      const url = new URL(rawValue);
+      const sha256 = url.searchParams.get('sha256');
+      if (sha256 && sha256.length >= 16) {
+        setQrVerifying(true);
+        Promise.all([
+          verifyMedia({ sha256 }),
+          getCustodyTimeline(sha256).catch(() => null),
+        ]).then(([verifyRes, custody]) => {
+          if (custody) {
+            verifyRes.custodyTimeline = custody.events || [];
+            verifyRes.coSigners = custody.coSigners || [];
+            verifyRes.isRevoked = custody.isRevoked || false;
+            verifyRes.currentCustodian = custody.currentCustodian || null;
+          }
+          setQrResult(verifyRes);
+        }).catch(() => setError('Verification failed for scanned QR.')).finally(() => setQrVerifying(false));
+      } else {
+        setError('Invalid QR code — no SHA-256 hash found.');
+      }
+    } catch {
+      setError('Invalid QR code URL.');
+    }
+  }
+
+  // Auto-verify from QR code URL (?sha256=...)
+  useEffect(() => {
+    const sha256 = searchParams.get('sha256');
+    if (!sha256 || sha256.length < 16) return;
+    setQrVerifying(true);
+    Promise.all([
+      verifyMedia({ sha256 }),
+      getCustodyTimeline(sha256).catch(() => null),
+    ]).then(([verifyRes, custody]) => {
+      if (custody) {
+        verifyRes.custodyTimeline = custody.events || [];
+        verifyRes.coSigners = custody.coSigners || [];
+        verifyRes.isRevoked = custody.isRevoked || false;
+        verifyRes.currentCustodian = custody.currentCustodian || null;
+      }
+      setQrResult(verifyRes);
+    }).catch(() => setError('Verification failed for this hash.')).finally(() => setQrVerifying(false));
+  }, [searchParams]);
 
   function cleanupPreview() { if (previewRef.current) { URL.revokeObjectURL(previewRef.current); previewRef.current = null; } }
 
@@ -116,15 +169,62 @@ export default function VerifyPage() {
       {/* ── Main ── */}
       <div className="min-w-0">
         <AnimatePresence mode="wait">
+          {/* QR / Hash-based verification result */}
+          {(qrVerifying || qrResult) && !file && (
+            <motion.div key="qr-result" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
+              <div className="border border-accent/30 bg-accent/5 rounded-sm p-4 flex items-center gap-3 mb-4">
+                <QrCode className="w-5 h-5 text-accent shrink-0" strokeWidth={1.5} />
+                <div>
+                  <p className="text-[12px] font-medium text-ink">QR Code Verification</p>
+                  <p className="text-[11px] text-ink-tertiary font-mono truncate max-w-[400px]">SHA-256: {searchParams.get('sha256')}</p>
+                </div>
+              </div>
+
+              {qrVerifying && (
+                <div className="flex items-center justify-center py-16 gap-3">
+                  <Loader2 className="w-5 h-5 text-accent animate-spin" />
+                  <span className="text-[13px] text-ink-secondary">Verifying hash against ledger…</span>
+                </div>
+              )}
+
+              {qrResult && <ResultCard {...qrResult} />}
+
+              {/* Custody actions for QR-verified files */}
+              {qrResult && (qrResult.status === 'verified' || qrResult.status === 'similar') && (
+                <CustodyActions sha256={searchParams.get('sha256')} block={qrResult.block} onUpdate={() => {
+                  const sha256 = searchParams.get('sha256');
+                  setQrVerifying(true);
+                  Promise.all([verifyMedia({ sha256 }), getCustodyTimeline(sha256).catch(() => null)])
+                    .then(([v, c]) => { if (c) { v.custodyTimeline = c.events || []; v.coSigners = c.coSigners || []; v.isRevoked = c.isRevoked || false; v.currentCustodian = c.currentCustodian || null; } setQrResult(v); })
+                    .finally(() => setQrVerifying(false));
+                }} />
+              )}
+
+              <button onClick={() => { setQrResult(null); window.history.replaceState({}, '', '/verify'); }} className="flex items-center gap-1.5 text-[12px] text-ink-faint hover:text-ink transition mt-2">
+                <ArrowLeft className="w-3 h-3" /> Verify a file instead
+              </button>
+            </motion.div>
+          )}
+
           {/* Upload zone */}
-          {!file && (
+          {!file && !qrResult && !qrVerifying && (
             <motion.div key="upload" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
               <UploadZone onFileSelect={handleFile} />
 
               <div className="flex items-center justify-between">
                 <span className="text-[11px] text-ink-faint font-mono">No sign-in required</span>
+                <button onClick={() => setShowScanner(s => !s)} className="flex items-center gap-1.5 text-[11px] text-accent hover:text-accent/80 font-mono transition">
+                  <QrCode className="w-3.5 h-3.5" strokeWidth={1.5} />
+                  {showScanner ? 'Close scanner' : 'Scan QR code'}
+                </button>
                 <span className="text-[11px] text-ink-faint font-mono">max 100MB</span>
               </div>
+
+              {showScanner && (
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
+                  <QRScanner onScan={handleQrScan} onClose={() => setShowScanner(false)} />
+                </motion.div>
+              )}
 
               {/* Info cards */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
@@ -196,7 +296,7 @@ export default function VerifyPage() {
               {/* File card */}
               <motion.div variants={fade} custom={0} className="border border-rule rounded-sm bg-surface overflow-hidden">
                 <div className="px-4 md:px-5 py-3 border-b border-rule-light flex items-center justify-between">
-                  <span className="text-[10px] font-mono text-ink-tertiary tracking-widest uppercase">Verification Report (Notary)</span>
+                  <span className="text-[10px] font-mono text-ink-tertiary tracking-widest uppercase">Verification Report</span>
                   <span className="text-[10px] font-mono text-ink-faint hidden sm:inline">{new Date().toLocaleString()}</span>
                 </div>
                 <div className="p-4 md:p-5 flex gap-4 md:gap-5">
@@ -240,6 +340,13 @@ export default function VerifyPage() {
 
               {/* Verdict */}
               <motion.div variants={fade} custom={1}><ResultCard {...result} file={file} /></motion.div>
+
+              {/* Custody actions — for verified/similar files */}
+              {(result.status === 'verified' || result.status === 'similar') && result.block?.data?.sha256 && (
+                <motion.div variants={fade} custom={1.5}>
+                  <CustodyActions sha256={result.block.data.sha256} block={result.block} onUpdate={() => handleFile(file)} />
+                </motion.div>
+              )}
 
               {/* Comparison — only for images */}
               {result.block && file.type.startsWith('image/') && <motion.div variants={fade} custom={2}><CompareView currentFile={file} block={result.block} /></motion.div>}

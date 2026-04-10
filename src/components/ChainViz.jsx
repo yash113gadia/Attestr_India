@@ -1,6 +1,7 @@
 import { useRef, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import useIsLight from '../hooks/useIsLight';
 
 // Animated blockchain — blocks connected by lines, growing
 function Chain() {
@@ -103,8 +104,9 @@ function MiningParticles({ position }) {
 }
 
 export default function ChainViz({ className = '', size = 300, height = 150 }) {
+  const light = useIsLight();
   return (
-    <div className={className} style={{ width: size, height }}>
+    <div className={className} style={{ width: size, height, opacity: light ? 0.6 : 1 }}>
       <Canvas camera={{ position: [0, 0, 3], fov: 30 }} dpr={[1, 1.5]} gl={{ antialias: true, alpha: true }} style={{ background: 'transparent' }}>
         <ambientLight intensity={0.5} />
         <directionalLight position={[3, 3, 3]} intensity={0.6} />

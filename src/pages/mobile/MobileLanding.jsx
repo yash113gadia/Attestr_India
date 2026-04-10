@@ -29,7 +29,7 @@ export default function MobileLanding() {
             <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center">
               <Shield className="w-4 h-4 text-accent" strokeWidth={2} />
             </div>
-            <span className="text-[10px] font-mono text-ink-faint tracking-[0.2em] uppercase">Immutable Notary</span>
+            <span className="text-[10px] font-mono text-ink-faint tracking-[0.2em] uppercase">Immutable Proof</span>
           </div>
         </motion.div>
 
@@ -42,8 +42,8 @@ export default function MobileLanding() {
         </motion.p>
 
         <motion.div {...fade(0.3)} className="space-y-3 mb-10">
-          <Link to="/register" className="flex items-center justify-center gap-2.5 bg-white text-void text-[15px] font-medium py-4 rounded-sm w-full active:scale-[0.98] transition-transform shadow-lg shadow-white/5">
-            Notarize a File <ArrowRight className="w-4 h-4" />
+          <Link to="/register" className="flex items-center justify-center gap-2.5 bg-accent text-white text-[15px] font-medium py-4 rounded-sm w-full active:scale-[0.98] transition-transform shadow-lg shadow-accent/10">
+            Secure a File <ArrowRight className="w-4 h-4" />
           </Link>
           <div className="grid grid-cols-1 gap-3">
             <Link to="/verify" className="flex items-center justify-center text-ink-secondary text-[14px] font-medium py-4 border border-rule rounded-sm active:bg-surface-raised transition">
@@ -62,7 +62,7 @@ export default function MobileLanding() {
       {/* Stats strip */}
       <section className="border-t border-rule grid grid-cols-3 divide-x divide-rule">
         {[
-          { n: '5-8M', l: 'Daily Notary' },
+          { n: '5-8M', l: 'Daily Threats' },
           { n: '<1s', l: 'Verify' },
           { n: '100%', l: 'Immutable' },
         ].map((s) => (
@@ -84,7 +84,7 @@ export default function MobileLanding() {
             { num: '01', icon: Camera, title: 'Upload', desc: 'Any file type' },
             { num: '02', icon: Fingerprint, title: 'Hash', desc: 'SHA-256 + dHash' },
             { num: '03', icon: Blocks, title: 'Anchor', desc: 'Ethereum Sepolia' },
-            { num: '04', icon: ShieldCheck, title: 'Verify', desc: 'Notary Seal proof' },
+            { num: '04', icon: ShieldCheck, title: 'Verify', desc: 'Immutable proof' },
             { num: '05', icon: Search, title: 'Inspect', desc: 'Forensic analysis' },
           ].map((s) => (
             <div key={s.num} className="snap-start shrink-0 w-[140px] border border-rule rounded-sm bg-surface p-4">
@@ -122,7 +122,7 @@ export default function MobileLanding() {
       <section className="px-5 py-10 border-t border-rule text-center">
         <p className="font-serif text-[28px] tracking-tight mb-2">Start now.</p>
         <p className="text-[13px] text-ink-tertiary mb-6">Create your first immutable proof.</p>
-        <Link to="/register" className="flex items-center justify-center gap-2 bg-white text-void text-[15px] font-medium py-4 rounded-sm w-full active:scale-[0.98] transition-transform">
+        <Link to="/register" className="flex items-center justify-center gap-2 bg-accent text-white text-[15px] font-medium py-4 rounded-sm w-full active:scale-[0.98] transition-transform">
           Start Notarizing <ArrowRight className="w-4 h-4" />
         </Link>
       </section>

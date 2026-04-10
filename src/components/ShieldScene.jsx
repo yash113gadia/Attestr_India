@@ -1,6 +1,7 @@
 import { useRef, useMemo } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
+import useIsLight from '../hooks/useIsLight';
 
 // ── Rotating icosahedron wireframe core ──
 function Core() {
@@ -262,8 +263,9 @@ function Rig() {
 }
 
 export default function ShieldScene({ className = '', height = '100%' }) {
+  const light = useIsLight();
   return (
-    <div className={className} style={{ height, width: '100%' }}>
+    <div className={className} style={{ height, width: '100%', opacity: light ? 0.7 : 1 }}>
       <Canvas
         camera={{ position: [0, 0, 5.5], fov: 38 }}
         dpr={[1, 1.5]}

@@ -1,6 +1,7 @@
 import { useRef, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import useIsLight from '../hooks/useIsLight';
 
 // Animated fingerprint — concentric rings that pulse like a hash being computed
 function FingerprintRings() {
@@ -95,8 +96,9 @@ function ScanBeam() {
 }
 
 export default function FingerprintViz({ className = '', size = 200 }) {
+  const light = useIsLight();
   return (
-    <div className={className} style={{ width: size, height: size }}>
+    <div className={className} style={{ width: size, height: size, opacity: light ? 0.6 : 1 }}>
       <Canvas camera={{ position: [0, 0, 3], fov: 30 }} dpr={[1, 1.5]} gl={{ antialias: true, alpha: true }} style={{ background: 'transparent' }}>
         <FingerprintRings />
         <HashGrid />

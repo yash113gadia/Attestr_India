@@ -1,6 +1,7 @@
 import { useRef, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import useIsLight from '../hooks/useIsLight';
 
 // 3D padlock with encryption particle effects
 function Padlock() {
@@ -71,8 +72,9 @@ function Padlock() {
 }
 
 export default function LockViz({ className = '', size = 150 }) {
+  const light = useIsLight();
   return (
-    <div className={className} style={{ width: size, height: size }}>
+    <div className={className} style={{ width: size, height: size, opacity: light ? 0.6 : 1 }}>
       <Canvas camera={{ position: [0, 0, 2], fov: 35 }} dpr={[1, 1.5]} gl={{ antialias: true, alpha: true }} style={{ background: 'transparent' }}>
         <ambientLight intensity={0.5} />
         <directionalLight position={[3, 3, 3]} intensity={0.6} />
