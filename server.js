@@ -1,9 +1,10 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import rateLimit from 'express-rate-limit';
 import { ethers } from 'ethers';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
-import { createHash, randomBytes } from 'crypto';
+import { createHash, createHmac, randomBytes } from 'crypto';
 import admin from 'firebase-admin';
 import blockchain, { setFirestore } from './server/blockchain.js';
 
@@ -159,8 +160,29 @@ async function optionalAuth(req, _res, next) {
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
+const allowedOrigins = [
+  'https://attestrindia-production.up.railway.app',
+  'http://localhost:5173',
+  'http://localhost:3001',
+];
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, Postman)
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    callback(null, false);
+  },
+}));
 app.use(express.json({ limit: '50mb' }));
+
+// Rate limiting — generous for hackathon demo, but present for security
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 100,            // 100 requests per minute per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests — please try again in a minute.' },
+});
+app.use('/api/', apiLimiter);
 
 // ── Sepolia Contract Setup ──
 let contract = null;
@@ -223,7 +245,7 @@ app.post('/api/register-capture', optionalAuth, async (req, res) => {
   try {
     const buffer = Buffer.from(fileBase64, 'base64');
     const sha256 = createHash('sha256').update(buffer).digest('hex');
-    const dHash = sha256.substring(0, 64);
+    const dHash = null; // Perceptual dHash requires image decoding (canvas) — not available server-side
     const actualSize = buffer.byteLength;
 
     // ── Security validation (Layers 2-5) ──
@@ -254,7 +276,7 @@ app.post('/api/register-capture', optionalAuth, async (req, res) => {
         }
       }
 
-      // Layer 2: HMAC signature verification
+      // Layer 2: HMAC-SHA256 signature verification
       if (envelope?.signature && envelope?.integrity) {
         const canonical = [
           envelope.sha256 || '',
@@ -265,8 +287,10 @@ app.post('/api/register-capture', optionalAuth, async (req, res) => {
           envelope.attestation?.location?.latitude?.toFixed(6) || '0',
           envelope.attestation?.location?.longitude?.toFixed(6) || '0',
         ].join('|');
-        const expected = createHash('sha256').update(canonical + APP_SECRET).digest('hex');
-        if (expected !== envelope.signature) {
+        const expected = createHmac('sha256', APP_SECRET).update(canonical).digest('hex');
+        // Also accept legacy format for backwards compatibility with existing mobile app
+        const legacyExpected = createHash('sha256').update(canonical + APP_SECRET).digest('hex');
+        if (expected !== envelope.signature && legacyExpected !== envelope.signature) {
           return res.status(403).json({ error: 'Invalid signature — tampered envelope' });
         }
       }
@@ -303,7 +327,7 @@ app.post('/api/register-capture', optionalAuth, async (req, res) => {
     if (contract) {
       try {
         const sha256Bytes = '0x' + sha256;
-        const dHashHex = '0x' + dHash.substring(0, 16).padEnd(16, '0');
+        const dHashHex = '0x' + (dHash || '0'.repeat(16)).substring(0, 16).padEnd(16, '0');
         const tx = await contract.register(sha256Bytes, dHashHex, filename || 'capture', actualSize, mimeType || 'image/jpeg');
         const receipt = await tx.wait();
         onChain = {
@@ -318,7 +342,7 @@ app.post('/api/register-capture', optionalAuth, async (req, res) => {
       }
     }
 
-    res.json({ success: true, sha256, dHash, block, onChain });
+    res.json({ success: true, sha256, dHash, block, onChain, onChainSuccess: !!(onChain?.transactionHash), ...(onChain?.error ? { warning: 'Registered locally but blockchain registration failed — will appear on-chain after retry.' } : {}) });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
@@ -354,8 +378,8 @@ app.post('/api/register-url', optionalAuth, async (req, res) => {
     const { createHash } = await import('crypto');
     const sha256 = createHash('sha256').update(Buffer.from(buffer)).digest('hex');
 
-    // dHash derived from SHA-256 (no canvas on server)
-    const dHash = sha256.substring(0, 64);
+    // Perceptual dHash requires image decoding (canvas) — not available server-side
+    const dHash = null;
 
     // Check duplicates
     const existing = blockchain.findBySha256(sha256);
@@ -389,7 +413,7 @@ app.post('/api/register-url', optionalAuth, async (req, res) => {
     if (contract) {
       try {
         const sha256Bytes = '0x' + sha256;
-        const dHashHex = '0x' + dHash.substring(0, 16).padEnd(16, '0');
+        const dHashHex = '0x' + (dHash || '0'.repeat(16)).substring(0, 16).padEnd(16, '0');
         const tx = await contract.register(sha256Bytes, dHashHex, filename, fileSize, mimeType);
         const receipt = await tx.wait();
         onChain = {
@@ -404,7 +428,7 @@ app.post('/api/register-url', optionalAuth, async (req, res) => {
       }
     }
 
-    res.json({ success: true, sha256, dHash, filename, fileSize, mimeType, url, block, onChain });
+    res.json({ success: true, sha256, dHash, filename, fileSize, mimeType, url, block, onChain, onChainSuccess: !!(onChain?.transactionHash), ...(onChain?.error ? { warning: 'Registered locally but blockchain registration failed.' } : {}) });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
@@ -494,7 +518,7 @@ app.post('/api/register', optionalAuth, async (req, res) => {
   if (contract) {
     try {
       const sha256Bytes = '0x' + sha256;
-      const dHashHex = '0x' + dHash.padEnd(16, '0');
+      const dHashHex = '0x' + (dHash || '0'.repeat(16)).substring(0, 16).padEnd(16, '0');
       const tx = await contract.register(
         sha256Bytes,
         dHashHex,
@@ -517,7 +541,7 @@ app.post('/api/register', optionalAuth, async (req, res) => {
     }
   }
 
-  res.json({ success: true, block, onChain });
+  res.json({ success: true, block, onChain, onChainSuccess: !!(onChain?.transactionHash), ...(onChain?.error ? { warning: 'Registered locally but blockchain registration failed.' } : {}) });
 });
 
 // ── Verify ──
@@ -1076,7 +1100,7 @@ app.post('/api/v1/verify', async (req, res) => {
     }
 
     const sha256 = createHash('sha256').update(imageBuffer).digest('hex');
-    const dHash = sha256.substring(0, 64);
+    const dHash = null; // Perceptual dHash requires image decoding — not available server-side
     const fileSize = imageBuffer.length;
 
     // Local chain check
@@ -1133,7 +1157,7 @@ app.post('/api/v1/register', async (req, res) => {
     }
 
     const sha256 = createHash('sha256').update(imageBuffer).digest('hex');
-    const dHash = sha256.substring(0, 64);
+    const dHash = null; // Perceptual dHash requires image decoding — not available server-side
     const fileSize = imageBuffer.length;
     const resolvedFilename = filename || 'api-upload';
 
@@ -1155,13 +1179,13 @@ app.post('/api/v1/register', async (req, res) => {
     let onChain = null;
     if (contract) {
       try {
-        const tx = await contract.register('0x' + sha256, '0x' + dHash.substring(0, 16).padEnd(16, '0'), resolvedFilename, fileSize, mimeType);
+        const tx = await contract.register('0x' + sha256, '0x' + (dHash || '0'.repeat(16)).substring(0, 16).padEnd(16, '0'), resolvedFilename, fileSize, mimeType);
         const receipt = await tx.wait();
         onChain = { transactionHash: receipt.hash, blockNumber: Number(receipt.blockNumber), etherscanUrl: `https://sepolia.etherscan.io/tx/${receipt.hash}`, network: 'sepolia', gasUsed: receipt.gasUsed.toString() };
       } catch (err) { onChain = { error: err.reason || err.message }; }
     }
 
-    res.json({ success: true, sha256, dHash, meta: { fileSize, mimeType, filename: resolvedFilename }, onChain });
+    res.json({ success: true, sha256, dHash, meta: { fileSize, mimeType, filename: resolvedFilename }, onChain, onChainSuccess: !!(onChain?.transactionHash), ...(onChain?.error ? { warning: 'Registered locally but blockchain registration failed.' } : {}) });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
@@ -1170,6 +1194,41 @@ app.post('/api/v1/register', async (req, res) => {
 // ── Health Check ──
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', uptime: process.uptime(), blocks: blockchain.getChain().length, sepolia: !!contract });
+});
+
+// ── API Documentation ──
+app.get('/api/docs', (_req, res) => {
+  res.json({
+    name: 'Attestr API',
+    version: '1.0.0',
+    description: 'Decentralized media authentication — register and verify media on Ethereum Sepolia',
+    endpoints: [
+      { method: 'POST', path: '/api/register', description: 'Register a media file (sha256 + dHash)', auth: 'Optional (Bearer token)' },
+      { method: 'POST', path: '/api/verify', description: 'Verify a media file by SHA-256 hash', auth: 'Optional' },
+      { method: 'POST', path: '/api/register-capture', description: 'Register a capture from mobile app (base64 + attestation)', auth: 'Optional' },
+      { method: 'POST', path: '/api/register-url', description: 'Register media from a URL', auth: 'Optional' },
+      { method: 'GET', path: '/api/chain', description: 'Browse the full registration ledger' },
+      { method: 'GET', path: '/api/activity', description: 'Public activity feed (anonymized)' },
+      { method: 'GET', path: '/api/status', description: 'Server status + Sepolia connection info' },
+      { method: 'GET', path: '/api/my-media/:userId', description: 'Get all media registered by a user' },
+      { method: 'GET', path: '/api/custody/:sha256', description: 'Full chain of custody timeline for a file' },
+      { method: 'POST', path: '/api/co-attest', description: 'Co-sign an existing registration', auth: 'Required' },
+      { method: 'POST', path: '/api/transfer-custody', description: 'Transfer custody to another user', auth: 'Required' },
+      { method: 'POST', path: '/api/revoke', description: 'Revoke an attestation', auth: 'Required' },
+      { method: 'POST', path: '/api/v1/register', description: 'Public API — register with API key', auth: 'x-api-key header' },
+      { method: 'POST', path: '/api/v1/verify', description: 'Public API — verify a media file', auth: 'None' },
+      { method: 'POST', path: '/api/keys/generate', description: 'Generate an API key', auth: 'Required' },
+      { method: 'GET', path: '/api/keys', description: 'List your API keys', auth: 'Required' },
+      { method: 'DELETE', path: '/api/keys/:id', description: 'Revoke an API key', auth: 'Required' },
+      { method: 'GET', path: '/api/health', description: 'Health check' },
+      { method: 'GET', path: '/api/docs', description: 'This documentation endpoint' },
+    ],
+    blockchain: {
+      network: 'Ethereum Sepolia',
+      contract: '0x37FCD33D5FF07cfa3A75D27B4ec4cF09e458dfac',
+      etherscan: 'https://sepolia.etherscan.io/address/0x37FCD33D5FF07cfa3A75D27B4ec4cF09e458dfac',
+    },
+  });
 });
 
 // ── Serve static frontend in production ──

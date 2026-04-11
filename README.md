@@ -38,6 +38,7 @@
 - [Project Structure](#project-structure)
 - [API Reference](#api-reference)
 - [Getting Started](#getting-started)
+- [Architecture Decisions & Known Limitations](#architecture-decisions--known-limitations)
 - [Team](#team--ctrlaltdiablo)
 
 ---
@@ -67,13 +68,13 @@ Attestr spans **five surfaces** — web platform, Android app, Chrome extension,
 ┌─────────────────────────────────────────────────────────────────┐
 │                        CLIENT SURFACES                          │
 │                                                                 │
-│  ┌─────────────┐  ┌──────────────┐  ┌────────┐  ┌───────────┐   │
-│  │  Web App    │  │  Android App │  │ Chrome │  │  Desktop  │   │
-│  │  React 19   │  │  React Native│  │  Ext.  │  │  Agent    │   │
-│  │  Vite 8     │  │  Expo SDK 52 │  │  MV3   │  │  Node.js  │   │
-│  │  Tailwind 4 │  │  7-layer sec │  │        │  │  Watcher  │   │
-│  └──────┬──────┘  └──────┬───────┘  └───┬────┘  └─────┬─────┘   │
-│         │                │              │             │         │
+│  ┌─────────────┐  ┌──────────────┐  ┌────────┐  ┌───────────┐  │
+│  │  Web App    │  │  Android App │  │ Chrome │  │  Desktop  │  │
+│  │  React 19   │  │  React Native│  │  Ext.  │  │  Agent    │  │
+│  │  Vite 8     │  │  Expo SDK 52 │  │  MV3   │  │  Node.js  │  │
+│  │  Tailwind 4 │  │  Multi-layer │  │        │  │  Watcher  │  │
+│  └──────┬──────┘  └──────┬───────┘  └───┬────┘  └─────┬─────┘  │
+│         │                │              │              │         │
 │    Only hashes      Signed envelope   Hash only    Hash only    │
 │         │                │              │              │        │
 │         └────────────────┴──────────────┴──────────────┘        │
@@ -124,7 +125,7 @@ Full-featured React 19 SPA with responsive desktop + mobile layouts. Upload or c
 **Live at**: [attestrindia-production.up.railway.app](https://attestrindia-production.up.railway.app)
 
 ### 2. Android App (separate repo: `attestr-mobile/`)
-Native Android app built with React Native 0.76 + Expo SDK 52. Field capture with instant camera, background processing queue, 7-layer security pipeline, Google Sign-In for persistent data, GPS/sensor attestation baked into every registration.
+Native Android app built with React Native 0.76 + Expo SDK 52. Field capture with instant camera, background processing queue, multi-layer security pipeline, Google Sign-In for persistent data, GPS/sensor attestation baked into every registration.
 
 **Download**: [APK on GitHub Releases](https://github.com/yash113gadia/Attestr_India/releases/tag/v1.0.0)
 
@@ -175,7 +176,7 @@ Self-serve API key management via the dashboard. Third-party apps can register a
 |---------|-------------|
 | Instant camera capture | Zero shutter lag, optimized for field use |
 | Background queue | Camera never blocks — photos queued and processed asynchronously |
-| 7-layer security | SHA-256 → HMAC → Nonce → Device Integrity → GPS/Sensors → Signed Envelope → Blockchain |
+| Multi-layer security | SHA-256 → HMAC → Nonce → Device Integrity → GPS/Sensors → Signed Envelope → Blockchain |
 | Auto-retry | Exponential backoff (3s → 6s → 12s) with connectivity pre-check |
 | Google Sign-In | Persistent data across reinstalls — captures synced to account |
 | GPS + sensor attestation | Latitude, longitude, altitude, accelerometer, gyroscope baked in |
@@ -202,12 +203,12 @@ Self-serve API key management via the dashboard. Third-party apps can register a
 - **Firebase Auth**: Google OAuth with JWT token verification on every API call
 - **API key isolation**: Firestore-backed per-user key management with rate limiting
 
-### Mobile App — 7-Layer Security Pipeline
+### Mobile App — Multi-Layer Security Pipeline
 ```
 Layer 1: Client SHA-256     → Cryptographic fingerprint of raw capture
-Layer 2: HMAC-SHA256        → Message authentication with app secret
+Layer 2: HMAC-SHA256        → Message authentication code with server-verified secret
 Layer 3: Server Nonce       → One-time token prevents replay attacks
-Layer 4: Device Integrity   → Platform, OS, device model verification
+Layer 4: Device Attestation → Platform, OS, device model heuristic verification
 Layer 5: GPS + Sensors      → Latitude/longitude/altitude + accelerometer + gyroscope
 Layer 6: Signed Envelope    → All layers combined into tamper-evident JSON payload
 Layer 7: Blockchain Seal    → Immutable on-chain record with Ethereum TX proof
@@ -426,6 +427,21 @@ adb install -r android/app/build/outputs/apk/release/app-release.apk
 node desktop-agent/agent.js /path/to/watch
 # Any new image/video saved to the folder is auto-registered on the blockchain
 ```
+
+---
+
+## Architecture Decisions & Known Limitations
+
+Transparency is a core principle. Below are deliberate trade-offs and areas for future improvement:
+
+| Area | Decision / Limitation | Rationale |
+|------|----------------------|-----------|
+| **Perceptual dHash** | Only computed client-side on images (Web Worker + canvas). Server-side and desktop agent register `null` dHash when no image decoder is available. | Node.js lacks a built-in canvas; adding sharp/jimp would increase server bundle size for a hackathon prototype. |
+| **Device Attestation** | Uses heuristic checks (platform strings, screen dimensions, sensor availability) — not Android SafetyNet/Play Integrity. | SafetyNet requires Google Play Services API key setup and production signing, which is out of scope for a hackathon prototype on Sepolia testnet. |
+| **On-chain dHash storage** | Contract stores `bytes8` (16 hex chars) while clients compute 64 hex chars. The hash is truncated before on-chain submission. | Gas optimization — storing full 256-bit perceptual hash would double storage costs. The truncated hash still enables meaningful fuzzy matching. |
+| **Nonce anti-replay** | Nonces are stored in server memory (`Map`). On serverless/ephemeral platforms, nonces reset on cold start. | Acceptable for Railway (long-lived process). A production system would use Redis or Firestore for nonce persistence. |
+| **Testnet only** | All on-chain records live on Sepolia testnet, not Ethereum mainnet. | Mainnet deployment requires real ETH for gas. The architecture is mainnet-ready — only the RPC URL and contract address need to change. |
+| **CORS** | Restricted to known origins (production URL + localhost). | Standard security practice for API servers. |
 
 ---
 
