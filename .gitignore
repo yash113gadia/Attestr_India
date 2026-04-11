@@ -50,7 +50,6 @@ generate-*.js
 hardhat.config.cjs
 eslint.config.js
 .node-version
-.npmrc
 
 # Build scripts (contract already deployed)
 scripts/
