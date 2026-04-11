@@ -97,7 +97,7 @@ async function registerFile(filePath) {
       },
       body: JSON.stringify({
         sha256,
-        dHash: null, // Perceptual dHash requires canvas/image decoding — not available in CLI Node.js
+        dHash: '0'.repeat(64), // Desktop agent doesn't compute perceptual hash (needs canvas)
         filename: name,
         fileSize: size,
         mimeType: getMimeType(ext),
